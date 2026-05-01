@@ -1,6 +1,6 @@
 {
   "name": "@lanmower/foph",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "type": "module",
   "description": "Hermes-equivalent AI coding agent in JS, built on pi-mono + floosie + xstate + anentrypoint-design",
   "bin": {
