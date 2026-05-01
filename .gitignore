@@ -23,6 +23,7 @@ dist
 # tracked: .gm/rs-learn.db, .gm/code-search/, AGENTS.md, .gm/prd.yml
 # <<< gm managed
 
+
 .plugkit-browser-profile/
 .plugkit-browser-profile-*/
 .plugkit-agent-worktree/
