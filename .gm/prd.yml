@@ -1,0 +1,201 @@
+- id: integrate-design-system
+  subject: Integrate anentrypoint-design into flatspace theme
+  status: pending
+  description: >-
+    Rewrite website/theme.mjs to import anentrypoint-design v0.0.29 from unpkg
+    CDN, replace hardcoded HTML/CSS with webjsx-based AppShell + Topbar + main
+    content via page data. Pro-rata: use Section, Panel, Row, Rail, Dot
+    components per design paradigm (tonal surfaces over borders, indicator
+    rails, generous spacing, typography hierarchy). No custom CSS overrides.
+  effort: medium
+  category: feature
+  route_family: execution
+  load: 0.85
+  failure_modes:
+    - webjsx render fails on unpkg CDN
+    - page data shape mismatches component expectations
+    - CSS scoping .ds-247420 conflicts with existing styles
+  route_fit: examined
+  authorization: witnessed
+  blocking:
+    - rebuild-pages
+  blockedBy: []
+  acceptance:
+    - >-
+      theme.mjs imports anentrypoint-design from unpkg, mounts AppShell with
+      Topbar + main Section
+    - all 7 pages render without JS errors in live browser
+    - >-
+      visual layout respects pro-rata: tonal backgrounds, rails on list items,
+      4px spacing grid, Nunito/Archivo/Mono type hierarchy
+    - exec:browser witness on each page validates DOM structure and CSS classes
+  edge_cases:
+    - CDN unavailable — fallback to local dist rebuild
+    - webjsx mount fails — check page data shape vs component schema
+- id: rebuild-pages
+  subject: Enrich page YAML with structured data for webjsx rendering
+  status: pending
+  description: >-
+    Rewrite website/content/pages/*.yaml (home, architecture, cli, tools,
+    platforms, skills, development) to add structured sections: hero (home
+    only), features (list of {name, desc} with rail categories), examples/items
+    (list of {name, desc, href}), etc. Keep markdown body for fallback; add data
+    shape for webjsx Section + Panel + Row rendering.
+  effort: medium
+  category: feature
+  route_family: representation
+  load: 0.7
+  failure_modes:
+    - YAML parse error
+    - data shape missing required fields for components
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy:
+    - integrate-design-system
+  acceptance:
+    - >-
+      all 7 pages have hero/sections/features/examples data per design-system
+      page shape
+    - title, body, slug fields unchanged for backward compat
+    - flatspace build completes without YAML errors
+    - >-
+      webjsx render uses section data first, falls back to markdown body if no
+      data
+  edge_cases:
+    - >-
+      page has no natural sections (e.g., cli is flat command reference) — use
+      Panel + Row for each command group
+- id: flatspace-build-test
+  subject: Run flatspace build and validate HTML output
+  status: pending
+  description: >-
+    Execute `cd website && node ../node_modules/flatspace/bin/flatspace.js
+    build` to compile pages to docs/, verify no build errors, spot-check
+    generated HTML for webjsx render correctness (AppShell present, Topbar nav
+    rendered, Section + Panel structure intact).
+  effort: small
+  category: infra
+  route_family: execution
+  load: 0.6
+  failure_modes:
+    - flatspace build hangs or crashes
+    - theme.mjs import error on webjsx/cdn
+    - page data shape incompatibility
+  route_fit: examined
+  authorization: witnessed
+  blocking:
+    - browser-validate-pages
+  blockedBy:
+    - rebuild-pages
+  acceptance:
+    - docs/*.html generated without stderr
+    - >-
+      spot-check docs/index.html contains AppShell + Topbar + main Section
+      rendered
+    - no 404 on unpkg CDN imports (check network tab in exec:browser)
+  edge_cases:
+    - esbuild fails on import syntax — use `node --check` to debug
+- id: browser-validate-pages
+  subject: Live browser validation of all 7 pages on GitHub Pages
+  status: pending
+  description: >-
+    For each page (home, architecture, cli, tools, platforms, skills,
+    development): (1) boot exec:browser, (2) navigate to
+    https://anentrypoint.github.io/foph/<slug>/, (3) exec:browser page.evaluate
+    to assert DOM structure (AppShell present, nav rendered, main Section with
+    panels/rows), (4) validate pro-rata CSS: tonal backgrounds, no borders,
+    rails present on categorized items, spacing/type hierarchy per SKILL.md.
+    Capture witness of layout, colors, spacing.
+  effort: large
+  category: feature
+  route_family: execution
+  load: 0.9
+  failure_modes:
+    - page 404 (not deployed yet)
+    - webjsx render errors (console.error)
+    - CSS scoping broken (.ds-247420 not applied)
+    - layout regression from old theme
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy:
+    - flatspace-build-test
+  acceptance:
+    - all 7 pages HTTP 200, no console errors
+    - 'DOM: AppShell > Topbar (with brand + nav) > Crumb + main Section'
+    - >-
+      CSS: .ds-247420 scope applied, panels use --panel-1/2/3 tonal backgrounds,
+      no <border> elements
+    - >-
+      Rails: categorized items (tools, platforms, skills) display rail-colored
+      left stripes
+    - >-
+      Type: h1/h2 use --ff-display (Archivo Black), body uses --ff-ui (Nunito),
+      code blocks use --ff-mono (JetBrains)
+    - >-
+      Spacing: sections separated by 32px gap, row padding 6–10px, list row
+      height 36–44px, no margins breaking the 4px grid
+    - screenshot + page.evaluate output captured per page
+  edge_cases:
+    - page not yet deployed to GitHub Pages — git push required first
+    - live site still showing old theme — hard-refresh browser cache
+- id: anentrypoint-design-dist-rebuild
+  subject: Rebuild anentrypoint-design dist if source has drifted
+  status: pending
+  description: >-
+    Check if C:\dev\anentrypoint-design\dist\247420.js is stale vs src/. If
+    newer src files exist (src/components/*.js, src/index.js post-build), run
+    `node scripts/build.mjs` to rebuild dist/, then verify foph package.json
+    `file:../anentrypoint-design` link picks up new dist.
+  effort: small
+  category: infra
+  route_family: execution
+  load: 0.4
+  failure_modes:
+    - esbuild fails on src/ syntax error
+    - dist files not updated
+    - foph npm install fails to link
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: []
+  acceptance:
+    - >-
+      dist/247420.js exists and is newer than src/ files (or timestamps match if
+      already fresh)
+    - build script runs without stderr
+    - foph can import from file:../anentrypoint-design without 404
+  edge_cases:
+    - postcss prefix step fails — check postcss-prefix-selector version
+
+- id: debug-webjsx-mount
+  subject: Debug webjsx mount rendering failure on live GitHub Pages
+  status: pending
+  description: >-
+    Prior session: home page loads HTTP 200 but page.evaluate shows AppShell/Topbar/Section not rendering to DOM. Mount code embedded in HTML is syntactically correct. Debug: (1) exec:browser with page.evaluate checking window.console for errors post-load, (2) verify unpkg CDN 247420.js fetch success via Network inspection, (3) check window.__debug for render state, (4) inspect actual #app DOM to see if mount() produced elements. Hypothesis: mount() executed but produced no DOM or threw unhandled error.
+  effort: medium
+  category: bug
+  route_family: execution
+  load: 0.9
+  failure_modes:
+    - mount() throws unhandled error silently
+    - CDN 247420.js fails to parse or load
+    - page data shape doesn't match component expectations
+    - webjsx components not found in window namespace
+  route_fit: examined
+  authorization: witnessed
+  blocking:
+    - integrate-design-system
+  blockedBy: []
+  acceptance:
+    - root cause identified via browser console.error or page.evaluate checks
+    - mount() call verified executing in page context
+    - #app DOM inspected post-mount (empty vs populated)
+    - unpkg CDN fetch confirmed successful via Network tab
+    - next step clear (fix root cause or modify page data)
+  edge_cases:
+    - mount() runs but components are undefined — check importmap syntax
+    - page data passed as invalid JSON — inspect window.pageBody in console
+    - CDN script load race condition — add defer or explicit Promise.all on import
+
