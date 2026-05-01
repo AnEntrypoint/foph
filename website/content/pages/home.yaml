@@ -1,5 +1,66 @@
 title: Foph
 slug: home
+hero:
+  heading: Foph
+  subheading: Open JS agent harness built on pi-mono + floosie + xstate + anentrypoint-design
+  badges:
+    - label: "21/21"
+      desc: integration tests
+    - label: "11"
+      desc: built-in tools
+    - label: "16"
+      desc: gateway platforms
+    - label: "8"
+      desc: memory backends
+sections:
+  - id: substrate
+    name: Substrate
+    features:
+      - name: "@mariozechner/pi-coding-agent"
+        desc: agent loop, providers, TUI primitives
+      - name: floosie
+        desc: gateway stream pipeline (xstate-backed)
+      - name: xstate
+        desc: agent turn machine + lifecycle
+      - name: anentrypoint-design
+        desc: webjsx + ripple-ui design system for the dashboard
+      - name: flatspace
+        desc: flat-file CMS + static site builder
+  - id: quick-start
+    name: Quick Start
+    body: |
+      ```
+      npm install
+      node bin/foph.js tools
+      node bin/foph.js run
+      node bin/foph.js dashboard --port 3000
+      ```
+  - id: architecture
+    name: Architecture
+    features:
+      - name: Agent machine
+        desc: xstate turn machine + context compressor (head/middle/tail policy + handoff + iterative updates)
+      - name: Session store
+        desc: better-sqlite3 + FTS5 + FileAuthStore credentials
+      - name: Scheduler
+        desc: cron jobs + batch runner for multi-turn workflows
+      - name: Skills
+        desc: bundled + user-extensible via ~/.foph/skills/
+      - name: Dashboard
+        desc: anentrypoint-design webjsx with live chat, analytics, cron monitoring
+examples:
+  - label: Architecture
+    href: /architecture/
+  - label: Tools
+    href: /tools/
+  - label: Platforms
+    href: /platforms/
+  - label: Skills
+    href: /skills/
+  - label: CLI
+    href: /cli/
+  - label: Development
+    href: /development/
 body: |
   # Foph
 

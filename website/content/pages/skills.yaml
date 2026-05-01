@@ -1,5 +1,24 @@
 title: Skills — Foph
 slug: skills
+sections:
+  - id: bundled-categories
+    name: Bundled Categories
+    features:
+      - name: Creative
+        desc: "ASCII video generation, architecture diagrams, concept sketching. 3 skills"
+      - name: Software Development
+        desc: "Systematic debugging, code review, RFC authoring. 3 skills"
+      - name: Operations
+        desc: "Incident response, log triage. 2 skills"
+      - name: Data
+        desc: "ETL pipelines, SQL explanation. 2 skills"
+      - name: Planning
+        desc: "Weekly review, OKR drafting. 2 skills"
+examples:
+  - label: Bundled Categories
+    href: "#bundled-categories"
+  - label: Custom Skills
+    href: "#custom-skills"
 body: |
   # Skills
 

@@ -1,5 +1,57 @@
 title: Development — Foph
 slug: development
+sections:
+  - id: testing
+    name: Testing
+    features:
+      - name: Integration Tests
+        desc: "One test.js at project root. 21 integration tests passing, ≤200 lines"
+      - name: Real Services
+        desc: "Real data, no mocks. Failure regresses to EXECUTE"
+      - name: Coverage
+        desc: "Agent loop, CLI, gateway, plugins, skills, sessions, cron, batch, dashboard, ACP"
+  - id: project-layout
+    name: Project Layout
+    features:
+      - name: CLI
+        desc: "bin/foph.js (commander entry)"
+      - name: Agent & Tools
+        desc: "src/agent/* (xstate machine, context compressor, pi-bridge)"
+      - name: Execution
+        desc: "src/tools/* (bash, read, write, edit, grep, todo, memory, delegate, browser)"
+      - name: Gateway & Platforms
+        desc: "src/gateway/* (16 functional adapters: Telegram, Discord, Slack, WhatsApp, etc)"
+      - name: Dashboard
+        desc: "src/web/* (anentrypoint-design webjsx, express server)"
+      - name: Storage
+        desc: "src/sessions.js (better-sqlite3), src/auth.js (FileAuthStore)"
+  - id: website-build
+    name: Website Build
+    features:
+      - name: Flatspace
+        desc: "Static site builder: website/content/pages/*.yaml → website/docs/*.html"
+      - name: Theme
+        desc: "website/theme.mjs renderer (anentrypoint-design webjsx, unpkg CDN)"
+      - name: GitHub Pages
+        desc: "Automated deploy via .github/workflows/pages.yml"
+  - id: resources
+    name: Resources
+    features:
+      - name: CHANGELOG.md
+        desc: "Release history and feature announcements"
+      - name: AGENTS.md
+        desc: "Subsystem deep dives and architecture guide"
+      - name: Architecture Page
+        desc: "11 subsystems: agent loop, context engine, tools, gateway, sessions, memory, skills, dashboard, auth, cron, observability"
+examples:
+  - label: Testing
+    href: "#testing"
+  - label: Project Layout
+    href: "#project-layout"
+  - label: Website Build
+    href: "#website-build"
+  - label: Resources
+    href: "#resources"
 body: |
   # Development
 

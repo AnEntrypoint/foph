@@ -1,5 +1,93 @@
 title: Architecture — Foph
 slug: architecture
+sections:
+  - id: agent-loop
+    name: Agent Loop
+    features:
+      - name: Machine
+        desc: "src/agent/machine.js (xstate v5 turn choreography)"
+      - name: LLM Bridge
+        desc: "src/agent/pi-bridge.js (pi-ai provider adapter)"
+      - name: Substrate
+        desc: "@mariozechner/pi-agent-core (runAgentLoop, agentLoop)"
+  - id: context-compressor
+    name: Context Engine & Compressor
+    features:
+      - name: Builder
+        desc: "src/context/engine.js (blocksToSystemMessage)"
+      - name: Compressor
+        desc: "src/agent/compress/ (policy, tokens, prune, prompt, fallback)"
+      - name: Strategy
+        desc: head/middle/tail cutoff; preserve recent context; maintain handoff invariant
+  - id: tool-registry
+    name: Tool Registry
+    features:
+      - name: Registry
+        desc: "src/tools/registry.js (registration + schema introspection)"
+      - name: Tools
+        desc: bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser
+      - name: Environments
+        desc: "src/tools/environments/{local,docker,ssh}.js"
+  - id: gateway-platforms
+    name: Gateway & Platforms
+    features:
+      - name: Gateway
+        desc: "src/gateway/run.js (event hub + agent wiring)"
+      - name: Platforms
+        desc: "src/gateway/platforms/*.js (adapter implementations)"
+      - name: Hooks
+        desc: gateway-level filtering + rate limiting
+  - id: session-store
+    name: Session Store
+    features:
+      - name: Store
+        desc: "src/sessions.js (better-sqlite3, FTS5 full-text search)"
+  - id: memory-plugins
+    name: Memory & Plugins
+    features:
+      - name: Providers
+        desc: "Honcho, Mem0, Supermemory, Byterover, Hindsight, Openviking, Retaindb, Holographic"
+      - name: Manager
+        desc: "src/plugins/manager.js (lifecycle + health)"
+      - name: Tool
+        desc: "src/tools/memory.js (store/recall/search)"
+  - id: skills
+    name: Skills
+    features:
+      - name: Loader
+        desc: "src/skills/index.js (discovers ~/.foph/skills/ + bundled)"
+      - name: Format
+        desc: "SKILL.md markdown (name, description, examples, tools)"
+  - id: dashboard
+    name: Dashboard Web UI
+    features:
+      - name: App
+        desc: "src/web/app.js (547L, Section + motion + chat)"
+      - name: Server
+        desc: "src/web/server.js (express + /api endpoints)"
+      - name: Framework
+        desc: webjsx (no React)
+  - id: auth-profiles
+    name: Auth & Profiles
+    features:
+      - name: Auth
+        desc: "src/auth.js (credential storage + pi-ai integration)"
+      - name: Home
+        desc: "src/home.js (getFophHome, profile-safe paths)"
+  - id: cron-batch
+    name: Cron & Batch
+    features:
+      - name: Cron
+        desc: "src/cron/{scheduler,cron-parse}.js (persistent jobs, syntax parser)"
+      - name: Batch
+        desc: "src/batch.js (Promise.allSettled, aggregation)"
+  - id: observability
+    name: Observability
+    features:
+      - name: Logs
+        desc: "src/observability/log.js (events: subsystem, severity, ts, fields)"
+      - name: Debug
+        desc: "src/observability/debug.js (/debug/subsystem endpoints)"
 body: |
   # Architecture
 

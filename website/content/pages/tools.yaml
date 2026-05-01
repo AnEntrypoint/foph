@@ -1,5 +1,44 @@
 title: Tools — Foph
 slug: tools
+sections:
+  - id: core-tools
+    name: Core Tools
+    features:
+      - name: Bash
+        desc: "Cross-platform subprocess spawn. Parameters: cmd, cwd, timeout_ms, background"
+      - name: Read
+        desc: "File reader with line numbering. Parameters: path, offset, limit"
+      - name: Write
+        desc: "File writer with directory creation. Parameters: path, content"
+      - name: Edit
+        desc: "In-place string replacement. Parameters: path, old_string, new_string, replace_all"
+      - name: Grep
+        desc: "Recursive regex search (ripgrep). Parameters: pattern, path, glob, head_limit"
+  - id: context-tools
+    name: Context Tools
+    features:
+      - name: Todo
+        desc: "Per-session task management. Subcommands: add, list, update, complete, delete"
+      - name: Memory
+        desc: "Long-term memory interface. Routes to Honcho, Mem0, or SQLite fallback"
+      - name: Delegate
+        desc: "Sub-agent spawning with depth guard. Prevents unbounded recursion"
+  - id: external-tools
+    name: External Tools
+    features:
+      - name: Web Search
+        desc: "Internet search via SerpAPI or DuckDuckGo. Requires: SERPAPI_KEY (optional)"
+      - name: Image Generation
+        desc: "Image synthesis via OpenAI or Replicate. Requires: API tokens"
+      - name: Browser
+        desc: "Headless browser automation (puppeteer-core). Commands: navigate, click, evaluate"
+examples:
+  - label: Core Tools
+    href: "#core-tools"
+  - label: Context Tools
+    href: "#context-tools"
+  - label: External Tools
+    href: "#external-tools"
 body: |
   # Tools
 

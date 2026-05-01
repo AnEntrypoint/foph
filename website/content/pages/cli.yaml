@@ -1,5 +1,53 @@
 title: CLI — Foph
 slug: cli
+sections:
+  - id: top-commands
+    name: Top Commands
+    features:
+      - name: foph tools
+        desc: List available tools (bash, read, write, edit, grep, memory, etc)
+      - name: foph run
+        desc: Start interactive agent REPL with slash command support
+      - name: foph dashboard
+        desc: Web UI for sessions, chat, analytics, cron, skills, config, logs
+      - name: foph gateway
+        desc: Start messaging gateway (Telegram, Discord, Slack, WhatsApp, SMS, etc)
+  - id: session-history
+    name: Session & History
+    features:
+      - name: foph sessions
+        desc: List recent sessions with full-text search
+      - name: foph search
+        desc: Query message history across all sessions
+      - name: foph resume
+        desc: Continue a previous session by ID
+  - id: configuration
+    name: Configuration
+    features:
+      - name: foph profile
+        desc: Multi-user profiles (list, create, switch, delete)
+      - name: foph skin
+        desc: Switch UI theme
+      - name: foph config
+        desc: View and set configuration values
+  - id: workflows
+    name: Workflows
+    features:
+      - name: foph cron
+        desc: Scheduled jobs (list, add, cancel, tick)
+      - name: foph batch
+        desc: Parallel task runner from file
+      - name: foph acp
+        desc: JSON-RPC stdio for IDE integration
+examples:
+  - label: Top Commands
+    href: "#top-commands"
+  - label: Session & History
+    href: "#session-history"
+  - label: Configuration
+    href: "#configuration"
+  - label: Workflows
+    href: "#workflows"
 body: |
   # CLI
 
