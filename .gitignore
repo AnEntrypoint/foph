@@ -24,6 +24,7 @@ dist
 # <<< gm managed
 
 
+
 .plugkit-browser-profile/
 .plugkit-browser-profile-*/
 .plugkit-agent-worktree/

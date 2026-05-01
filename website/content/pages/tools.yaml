@@ -3,32 +3,80 @@ slug: tools
 body: |
   # Tools
 
-  Auto-discovered from `src/tools/*.js`. Each tool registers schema, handler, optional `checkFn`, and `requiresEnv`.
+  11 built-in tools auto-discovered from `src/tools/*.js`. Each tool registers schema, handler, optional `checkFn`, and `requiresEnv`.
 
-  ## Built-in
+  ## Core Tools
 
-  - **bash** — `cmd`, `cwd?`, `timeout_ms?`, `background?`. Cross-platform spawn.
-  - **read** — `path`, `offset?`, `limit?`. Returns numbered lines.
-  - **write** — `path`, `content`. Creates parent dirs.
-  - **edit** — `path`, `old_string`, `new_string`, `replace_all?`. Refuses ambiguous matches.
-  - **grep** — `pattern`, `path?`, `glob?`, `head_limit?`, `ignore_case?`. Recursive regex.
-  - **todo** — `add|list|update|complete|delete` per-session todos in SQLite.
-  - **memory** — `add|search|list`. Routes to configured provider; SQLite + FTS5 fallback.
-  - **delegate** — sub-agent spawn with depth guard.
-  - **web_search** — SerpAPI when keyed; DuckDuckGo HTML scrape fallback.
-  - **image_gen** — OpenAI images / Replicate predictions.
-  - **browser** — puppeteer-core (lazy). navigate / click / type / evaluate / screenshot / text.
+  ### Bash
+  Cross-platform subprocess spawn. Parameters: `cmd`, `cwd?`, `timeout_ms?`, `background?`.
+  Supports Unix shell syntax on all platforms (Mac/Linux/Windows).
 
-  ## Adding a tool
+  ### Read
+  File reader with line numbering. Parameters: `path`, `offset?`, `limit?`.
+  Returns numbered lines; supports offset + limit for large files.
+
+  ### Write
+  File writer with directory creation. Parameters: `path`, `content`.
+  Auto-creates parent directories.
+
+  ### Edit
+  In-place string replacement. Parameters: `path`, `old_string`, `new_string`, `replace_all?`.
+  Refuses ambiguous matches; supports whole-file replace mode.
+
+  ### Grep
+  Recursive regex search (ripgrep). Parameters: `pattern`, `path?`, `glob?`, `head_limit?`, `ignore_case?`.
+  Output modes: content, files_with_matches, count.
+
+  ## Context Tools
+
+  ### Todo
+  Per-session task management. Subcommands: `add|list|update|complete|delete`.
+  Persisted in SQLite; scoped to session.
+
+  ### Memory
+  Long-term memory interface. Subcommands: `add|search|list`.
+  Routes to configured provider (Honcho, Mem0, etc); SQLite + FTS5 fallback.
+
+  ### Delegate
+  Sub-agent spawning with depth guard. Spawns new agent with parent context + task.
+  Prevents unbounded recursion.
+
+  ## External Tools
+
+  ### Web Search
+  Internet search. Prefers SerpAPI when keyed; falls back to DuckDuckGo HTML scrape.
+  Requires: `SERPAPI_KEY` (optional).
+
+  ### Image Generation
+  Image synthesis. Supports OpenAI images + Replicate model predictions.
+  Requires: `OPENAI_API_KEY` or `REPLICATE_API_TOKEN`.
+
+  ### Browser
+  Headless browser automation (puppeteer-core, lazy-loaded).
+  Commands: navigate, click, type, evaluate, screenshot, text extraction.
+  Requires: no env vars (chromium bundled).
+
+  ## Adding a Tool
 
   ```js
   import { registry } from './tools/registry.js'
+
   registry.register({
       name: 'my_tool',
       toolset: 'core',
-      schema: { name: 'my_tool', description: '…', parameters: {...} },
+      schema: {
+          name: 'my_tool',
+          description: 'One-liner description',
+          parameters: {
+              type: 'object',
+              properties: { x: { type: 'string' } },
+              required: ['x']
+          }
+      },
       handler: async (args, ctx) => ({ ok: true }),
       checkFn: () => !!process.env.MY_KEY,
       requiresEnv: ['MY_KEY'],
   })
   ```
+
+  Drop the file in `src/tools/`. Auto-discovered by `discoverBuiltinTools()`.

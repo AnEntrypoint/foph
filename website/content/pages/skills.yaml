@@ -3,13 +3,33 @@ slug: skills
 body: |
   # Skills
 
-  Skills are markdown files with YAML frontmatter, scanned from:
+  5 bundled skill categories + user-extensible via `~/.foph/skills/`.
 
-  - `~/.foph/skills/`
-  - `<cwd>/skills/`
-  - any path passed to `listSkills([extraDirs])`
+  ## Bundled Categories
 
-  ## SKILL.md shape
+  ### Creative
+  ASCII video generation, architecture diagrams, concept sketching. 3 skills.
+
+  ### Software Development
+  Systematic debugging, code review, RFC authoring. 3 skills.
+
+  ### Operations
+  Incident response, log triage. 2 skills.
+
+  ### Data
+  ETL pipelines, SQL explanation. 2 skills.
+
+  ### Planning
+  Weekly review, OKR drafting. 2 skills.
+
+  ## Custom Skills
+
+  Drop additional `SKILL.md` files in:
+
+  - `~/.foph/skills/` (user directory, always auto-discovered)
+  - `<cwd>/skills/` (project directory, scanned on startup)
+
+  ## SKILL.md Shape
 
   ```
   ---
@@ -23,13 +43,3 @@ body: |
 
   Free-form markdown. Injected as a user message when invoked via /skill <name>.
   ```
-
-  ## Bundled categories
-
-  - **creative** — ascii-video, architecture-diagram, concept-diagrams
-  - **software-development** — systematic-debugging, code-review, rfc-writer
-  - **ops** — incident-response, log-triage
-  - **data** — etl-pipelines, sql-explainer
-  - **planning** — weekly-review, okr-drafter
-
-  Drop additional `SKILL.md` files in any subdirectory under `skills/` and they appear automatically.

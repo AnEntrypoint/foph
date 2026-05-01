@@ -23,33 +23,66 @@ footer { padding: 24px; text-align: center; color: #6b7280; }
 <body>
 <header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="active" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
 <main><h1>Tools</h1>
-<p>Auto-discovered from <code>src/tools/*.js</code>. Each tool registers schema, handler, optional <code>checkFn</code>, and <code>requiresEnv</code>.</p>
-<h2>Built-in</h2>
-<ul>
-<li><strong>bash</strong> — <code>cmd</code>, <code>cwd?</code>, <code>timeout_ms?</code>, <code>background?</code>. Cross-platform spawn.</li>
-<li><strong>read</strong> — <code>path</code>, <code>offset?</code>, <code>limit?</code>. Returns numbered lines.</li>
-<li><strong>write</strong> — <code>path</code>, <code>content</code>. Creates parent dirs.</li>
-<li><strong>edit</strong> — <code>path</code>, <code>old_string</code>, <code>new_string</code>, <code>replace_all?</code>. Refuses ambiguous matches.</li>
-<li><strong>grep</strong> — <code>pattern</code>, <code>path?</code>, <code>glob?</code>, <code>head_limit?</code>, <code>ignore_case?</code>. Recursive regex.</li>
-<li><strong>todo</strong> — <code>add|list|update|complete|delete</code> per-session todos in SQLite.</li>
-<li><strong>memory</strong> — <code>add|search|list</code>. Routes to configured provider; SQLite + FTS5 fallback.</li>
-<li><strong>delegate</strong> — sub-agent spawn with depth guard.</li>
-<li><strong>web_search</strong> — SerpAPI when keyed; DuckDuckGo HTML scrape fallback.</li>
-<li><strong>image_gen</strong> — OpenAI images / Replicate predictions.</li>
-<li><strong>browser</strong> — puppeteer-core (lazy). navigate / click / type / evaluate / screenshot / text.</li>
-</ul>
-<h2>Adding a tool</h2>
+<p>11 built-in tools auto-discovered from <code>src/tools/*.js</code>. Each tool registers schema, handler, optional <code>checkFn</code>, and <code>requiresEnv</code>.</p>
+<h2>Core Tools</h2>
+<h3>Bash</h3>
+<p>Cross-platform subprocess spawn. Parameters: <code>cmd</code>, <code>cwd?</code>, <code>timeout_ms?</code>, <code>background?</code>.</p>
+<p>Supports Unix shell syntax on all platforms (Mac/Linux/Windows).</p>
+<h3>Read</h3>
+<p>File reader with line numbering. Parameters: <code>path</code>, <code>offset?</code>, <code>limit?</code>.</p>
+<p>Returns numbered lines; supports offset + limit for large files.</p>
+<h3>Write</h3>
+<p>File writer with directory creation. Parameters: <code>path</code>, <code>content</code>.</p>
+<p>Auto-creates parent directories.</p>
+<h3>Edit</h3>
+<p>In-place string replacement. Parameters: <code>path</code>, <code>old_string</code>, <code>new_string</code>, <code>replace_all?</code>.</p>
+<p>Refuses ambiguous matches; supports whole-file replace mode.</p>
+<h3>Grep</h3>
+<p>Recursive regex search (ripgrep). Parameters: <code>pattern</code>, <code>path?</code>, <code>glob?</code>, <code>head_limit?</code>, <code>ignore_case?</code>.</p>
+<p>Output modes: content, files_with_matches, count.</p>
+<h2>Context Tools</h2>
+<h3>Todo</h3>
+<p>Per-session task management. Subcommands: <code>add|list|update|complete|delete</code>.</p>
+<p>Persisted in SQLite; scoped to session.</p>
+<h3>Memory</h3>
+<p>Long-term memory interface. Subcommands: <code>add|search|list</code>.</p>
+<p>Routes to configured provider (Honcho, Mem0, etc); SQLite + FTS5 fallback.</p>
+<h3>Delegate</h3>
+<p>Sub-agent spawning with depth guard. Spawns new agent with parent context + task.</p>
+<p>Prevents unbounded recursion.</p>
+<h2>External Tools</h2>
+<h3>Web Search</h3>
+<p>Internet search. Prefers SerpAPI when keyed; falls back to DuckDuckGo HTML scrape.</p>
+<p>Requires: <code>SERPAPI_KEY</code> (optional).</p>
+<h3>Image Generation</h3>
+<p>Image synthesis. Supports OpenAI images + Replicate model predictions.</p>
+<p>Requires: <code>OPENAI_API_KEY</code> or <code>REPLICATE_API_TOKEN</code>.</p>
+<h3>Browser</h3>
+<p>Headless browser automation (puppeteer-core, lazy-loaded).</p>
+<p>Commands: navigate, click, type, evaluate, screenshot, text extraction.</p>
+<p>Requires: no env vars (chromium bundled).</p>
+<h2>Adding a Tool</h2>
 <pre>
 import { registry } from './tools/registry.js'
+
 registry.register({
     name: 'my_tool',
     toolset: 'core',
-    schema: { name: 'my_tool', description: '…', parameters: {...} },
+    schema: {
+        name: 'my_tool',
+        description: 'One-liner description',
+        parameters: {
+            type: 'object',
+            properties: { x: { type: 'string' } },
+            required: ['x']
+        }
+    },
     handler: async (args, ctx) =&gt; ({ ok: true }),
     checkFn: () =&gt; !!process.env.MY_KEY,
     requiresEnv: ['MY_KEY'],
 })
-</pre></main>
+</pre>
+<p>Drop the file in <code>src/tools/</code>. Auto-discovered by <code>discoverBuiltinTools()</code>.</p></main>
 <footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
 </body>
 </html>

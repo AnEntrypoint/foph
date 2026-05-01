@@ -3,7 +3,11 @@ slug: home
 body: |
   # Foph
 
-  JavaScript rebuild of [hermes-agent](https://github.com/nousresearch/hermes-agent) user-visible behavior, with our preferred architecture.
+  Open JS agent harness built on **pi-mono + floosie + xstate + anentrypoint-design**.
+
+  ## What is Foph?
+
+  Foph is a JavaScript rebuild of [hermes-agent](https://github.com/nousresearch/hermes-agent) user-visible behavior, with our preferred architecture. It ships as a CLI, web dashboard, and programmable agent harness for multi-platform messaging (Telegram, Discord, Slack, email, SMS, WhatsApp, Matrix, and more).
 
   ## Substrate
 
@@ -13,7 +17,7 @@ body: |
   - **anentrypoint-design** — webjsx + ripple-ui design system for the dashboard.
   - **flatspace** — this very website (flat-file CMS + static site builder).
 
-  ## Quick start
+  ## Quick Start
 
   ```
   npm install
@@ -22,11 +26,26 @@ body: |
   node bin/foph.js dashboard --port 3000
   ```
 
-  ## What works
+  ## Test Coverage
 
-  - 21/21 integration tests passing
-  - 11 built-in tools (bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser)
-  - 16 functional gateway platforms
-  - 8 memory provider backends
-  - Cron scheduler, batch runner, web dashboard
-  - Full context compressor (head/middle/tail policy + handoff prompt + iterative updates + cooldown)
+  - **21/21** integration tests passing (agent loop, CLI, gateway, plugins, skills, sessions, cron, batch, dashboard, ACP, web, context-engine, compressor, auth, observability).
+  - **11** built-in tools (bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser).
+  - **16** functional gateway platforms (Telegram, Discord, Slack, email, SMS, WhatsApp, Matrix, Signal, Dingtalk, Feishu, WeChat, QQ, Mattermost, Zulip, BlueBubbles, Misskey).
+  - **8** memory provider backends (Honcho, Mem0, Supermemory, Byterover, Hindsight, Openviking, Retaindb, Holographic).
+
+  ## Architecture
+
+  - Agent turn machine (xstate) + context compressor (head/middle/tail policy + handoff prompt + iterative updates).
+  - Session store (better-sqlite3 + FTS5) + auth store (FileAuthStore).
+  - Cron scheduler + batch runner for multi-turn workflows.
+  - Full skill loader (bundled + user-extensible via ~/.foph/skills/).
+  - Dashboard web UI (anentrypoint-design webjsx) with live chat, analytics, cron monitoring.
+
+  ## Learn More
+
+  - [Architecture](/architecture/) — subsystem guide + AGENTS.md
+  - [Tools](/tools/) — all 11 built-in tools + usage
+  - [Platforms](/platforms/) — 16 gateway adapters + setup
+  - [Skills](/skills/) — bundled skill categories
+  - [CLI](/cli/) — command reference
+  - [Development](/development/) — integration test coverage + contributing

@@ -23,22 +23,67 @@ footer { padding: 24px; text-align: center; color: #6b7280; }
 <body>
 <header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="active" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
 <main><h1>CLI</h1>
+<p>Foph ships as <code>foph</code> command. Install via npm:</p>
 <pre>
-foph tools                          # list tools
-foph skills                         # list bundled skills
-foph profile [list|create|switch|delete] [name]
-foph skin [name]                    # active or switch
-foph sessions                       # recent sessions
-foph search "&lt;query&gt;"               # FTS5 over messages
-foph gateway --port &lt;port&gt;          # webhook + api_server
-foph acp                            # JSON-RPC stdio
-foph run                            # interactive REPL
-foph cron [list|add|cancel|delete|tick] [args]
-foph batch &lt;file&gt; --concurrency &lt;n&gt;
-foph dashboard --port &lt;port&gt;
-foph help-all                       # all slash commands
+npm install -g @lanmower/foph
 </pre>
-<h2>Slash commands inside REPL</h2>
+<h2>Top Commands</h2>
+<h3>foph tools</h3>
+<p>List available tools (bash, read, write, edit, grep, memory, delegate, browser, etc).</p>
+<pre>
+$ foph tools
+11 tools registered (core: 8 + env: 2 + external: 1)
+</pre>
+<h3>foph run</h3>
+<p>Start interactive agent REPL. Press Ctrl+C to exit.</p>
+<pre>
+$ foph run
+Agent ready. Type your prompt or /help for slash commands.
+</pre>
+<h3>foph dashboard --port 3000</h3>
+<p>Web UI: sessions, chat, analytics, cron jobs, skills, config, logs.</p>
+<pre>
+$ foph dashboard --port 3000
+Dashboard running at http://localhost:3000
+</pre>
+<h3>foph gateway --platform telegram</h3>
+<p>Start messaging gateway (webhook + agent loop). Requires platform credentials.</p>
+<pre>
+$ export TELEGRAM_BOT_TOKEN=...
+$ foph gateway --platform telegram --port 3001
+Gateway listening at http://localhost:3001
+</pre>
+<h2>Full Reference</h2>
+<h3>Session &amp; History</h3>
+<ul>
+<li><code>foph sessions</code> — list recent sessions + search</li>
+<li><code>foph search "&lt;query&gt;"</code> — full-text search over messages</li>
+<li><code>foph resume &lt;id&gt;</code> — continue a session</li>
+</ul>
+<h3>Configuration</h3>
+<ul>
+<li><code>foph profile [list|create|switch|delete]</code> — multi-user profiles</li>
+<li><code>foph skin [name]</code> — switch UI theme</li>
+<li><code>foph config [key] [value]</code> — view/set config</li>
+</ul>
+<h3>Skills &amp; Tools</h3>
+<ul>
+<li><code>foph skills</code> — list bundled + custom skills</li>
+<li><code>foph skill &lt;name&gt;</code> — show skill details</li>
+<li><code>foph tools</code> — list + filter tools</li>
+</ul>
+<h3>Workflows</h3>
+<ul>
+<li><code>foph cron [list|add|cancel|tick]</code> — scheduled jobs</li>
+<li><code>foph batch &lt;file&gt;</code> — parallel task runner</li>
+<li><code>foph acp</code> — JSON-RPC stdio for IDE integration</li>
+</ul>
+<h3>Help</h3>
+<ul>
+<li><code>foph help-all</code> — all slash commands (inside REPL)</li>
+<li><code>foph -h</code> — command-line help</li>
+</ul>
+<h2>Slash Commands in REPL</h2>
 <ul>
 <li><code>/help</code>, <code>/quit</code>, <code>/clear</code></li>
 <li><code>/profile [list|switch &lt;name&gt;]</code></li>

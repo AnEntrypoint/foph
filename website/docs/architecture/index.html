@@ -24,19 +24,76 @@ footer { padding: 24px; text-align: center; color: #6b7280; }
 <header><nav><a class="" href="/">Home</a><a class="active" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
 <main><h1>Architecture</h1>
 <p>Foph is an open JS agent harness built with substrate-first construction. Internal modules stay small (&lt;=200 lines) and compose through dependency-injected primitives.</p>
-<h2>Subsystem map</h2>
+<h2>Agent Loop</h2>
+<p>Xstate turn machine that orchestrates agent rounds: receive input → expand context → compress if needed → call LLM → dispatch tool calls → collect results → summarize → emit.</p>
 <ul>
-<li><strong>agent loop</strong> — <code>src/agent/machine.js</code> (xstate) + <code>src/agent/pi-bridge.js</code> (pi-ai adapter)</li>
-<li><strong>context compressor</strong> — <code>src/agent/compress/{tokens,policy,prompt,prune,fallback,compressor}.js</code></li>
-<li><strong>tools</strong> — registry + 11 built-ins, auto-discovered from <code>src/tools/*.js</code></li>
-<li><strong>execution environments</strong> — <code>src/tools/environments/{local,docker,ssh}.js</code></li>
-<li><strong>session store</strong> — <code>src/sessions.js</code> (better-sqlite3 + FTS5)</li>
-<li><strong>gateway</strong> — <code>src/gateway/run.js</code> + 18 platform adapters</li>
-<li><strong>ACP</strong> — <code>src/acp/server.js</code> (JSON-RPC stdio for IDE plugins)</li>
-<li><strong>plugins + memory</strong> — <code>src/plugins/manager.js</code> + 8 memory backends</li>
-<li><strong>commands + skin + skills + profiles</strong> — <code>src/commands/</code>, <code>src/skin/</code>, <code>src/skills/</code>, <code>src/commands/profile.js</code></li>
-<li><strong>observability</strong> — <code>src/observability/{log,debug}.js</code></li>
-<li><strong>CLI + REPL + dashboard</strong> — <code>bin/foph.js</code>, <code>src/cli/interactive.js</code>, <code>src/web/</code></li>
+<li><strong>Machine</strong>: <code>src/agent/machine.js</code> (xstate v5 turn choreography)</li>
+<li><strong>LLM Bridge</strong>: <code>src/agent/pi-bridge.js</code> (pi-ai provider adapter)</li>
+<li><strong>Substrate</strong>: <code>@mariozechner/pi-agent-core</code> (runAgentLoop, agentLoop)</li>
+</ul>
+<h2>Context Engine &amp; Compressor</h2>
+<p>Builds system message from file context, skills, memory, tools. Compresses history when budget exceeded using head/middle/tail policy.</p>
+<ul>
+<li><strong>Builder</strong>: <code>src/context/engine.js</code> (blocksToSystemMessage)</li>
+<li><strong>Compressor</strong>: <code>src/agent/compress/</code> (policy, tokens, prune, prompt, fallback)</li>
+<li><strong>Strategy</strong>: head/middle/tail cutoff; preserve recent context; maintain handoff invariant</li>
+</ul>
+<h2>Tool Registry</h2>
+<p>11 built-in tools auto-discovered. Tools run in execution environments: local (subprocess), docker (podman), ssh (remote).</p>
+<ul>
+<li><strong>Registry</strong>: <code>src/tools/registry.js</code> (registration + schema introspection)</li>
+<li><strong>Tools</strong>: bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser</li>
+<li><strong>Environments</strong>: <code>src/tools/environments/{local,docker,ssh}.js</code></li>
+</ul>
+<h2>Gateway &amp; Platforms</h2>
+<p>16 functional adapters for inbound messaging. Each adapter extends EventEmitter, emits 'message' events. Supported: Telegram, Discord, Slack, email, SMS, WhatsApp, Matrix, Signal, Dingtalk, Feishu, WeChat, QQ, Mattermost, Zulip, BlueBubbles, Misskey.</p>
+<ul>
+<li><strong>Gateway</strong>: <code>src/gateway/run.js</code> (event hub + agent wiring)</li>
+<li><strong>Platforms</strong>: <code>src/gateway/platforms/*.js</code> (adapter implementations)</li>
+<li><strong>Hooks</strong>: gateway-level filtering + rate limiting</li>
+</ul>
+<h2>Session Store</h2>
+<p>Persistent history + FTS5 full-text search. Schema: session_id, turns (JSON), metadata, created_at, updated_at.</p>
+<ul>
+<li><strong>Store</strong>: <code>src/sessions.js</code> (better-sqlite3)</li>
+</ul>
+<h2>Memory &amp; Plugins</h2>
+<p>8 provider backends: Honcho, Mem0, Supermemory, Byterover, Hindsight, Openviking, Retaindb, Holographic. Plugin manager handles lifecycle + health.</p>
+<ul>
+<li><strong>Providers</strong>: <code>src/plugins/memory/{honcho,mem0,supermemory,byterover,hindsight,openviking,retaindb,holographic}.js</code></li>
+<li><strong>Manager</strong>: <code>src/plugins/manager.js</code></li>
+<li><strong>Tool</strong>: <code>src/tools/memory.js</code> (store/recall/search)</li>
+</ul>
+<h2>Skills</h2>
+<p>Bundled SKILL.md files in 5 categories: creative, software-development, ops, data, planning. User can extend via ~/.foph/skills/.</p>
+<ul>
+<li><strong>Loader</strong>: <code>src/skills/index.js</code> (discovers ~/.foph/skills/ + bundled)</li>
+<li><strong>Format</strong>: SKILL.md markdown (name, description, examples, tools)</li>
+</ul>
+<h2>Dashboard Web UI</h2>
+<p>anentrypoint-design webjsx + ripple-ui. 14 routes: home, chat (SSE live), sessions, analytics, cron, batch, tools, models, skills, logs, config, env, docs, gateway.</p>
+<ul>
+<li><strong>App</strong>: <code>src/web/app.js</code> (547L, Section + motion + chat)</li>
+<li><strong>Server</strong>: <code>src/web/server.js</code> (express + /api endpoints)</li>
+<li><strong>Framework</strong>: webjsx (no React)</li>
+</ul>
+<h2>Auth &amp; Profiles</h2>
+<p>FileAuthStore for credential persistence. Profile support for multi-user isolation.</p>
+<ul>
+<li><strong>Auth</strong>: <code>src/auth.js</code> (credential storage + pi-ai integration)</li>
+<li><strong>Home</strong>: <code>src/home.js</code> (getFophHome, profile-safe paths)</li>
+</ul>
+<h2>Cron &amp; Batch</h2>
+<p>Cron scheduler for recurring workflows. Batch runner for parallel task execution.</p>
+<ul>
+<li><strong>Cron</strong>: <code>src/cron/{scheduler,cron-parse}.js</code> (persistent jobs, syntax parser)</li>
+<li><strong>Batch</strong>: <code>src/batch.js</code> (Promise.allSettled, aggregation)</li>
+</ul>
+<h2>Observability</h2>
+<p>Structured logging (JSONL) + /debug endpoints. window.__debug for client introspection.</p>
+<ul>
+<li><strong>Logs</strong>: <code>src/observability/log.js</code> (events: subsystem, severity, ts, fields)</li>
+<li><strong>Debug</strong>: <code>src/observability/debug.js</code> (/debug/subsystem endpoints)</li>
 </ul>
 <h2>Conventions</h2>
 <ul>

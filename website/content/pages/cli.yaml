@@ -3,23 +3,74 @@ slug: cli
 body: |
   # CLI
 
-  ```
-  foph tools                          # list tools
-  foph skills                         # list bundled skills
-  foph profile [list|create|switch|delete] [name]
-  foph skin [name]                    # active or switch
-  foph sessions                       # recent sessions
-  foph search "<query>"               # FTS5 over messages
-  foph gateway --port <port>          # webhook + api_server
-  foph acp                            # JSON-RPC stdio
-  foph run                            # interactive REPL
-  foph cron [list|add|cancel|delete|tick] [args]
-  foph batch <file> --concurrency <n>
-  foph dashboard --port <port>
-  foph help-all                       # all slash commands
+  Foph ships as `foph` command. Install via npm:
+
+  ```bash
+  npm install -g @lanmower/foph
   ```
 
-  ## Slash commands inside REPL
+  ## Top Commands
+
+  ### foph tools
+  List available tools (bash, read, write, edit, grep, memory, delegate, browser, etc).
+
+  ```
+  $ foph tools
+  11 tools registered (core: 8 + env: 2 + external: 1)
+  ```
+
+  ### foph run
+  Start interactive agent REPL. Press Ctrl+C to exit.
+
+  ```
+  $ foph run
+  Agent ready. Type your prompt or /help for slash commands.
+  ```
+
+  ### foph dashboard --port 3000
+  Web UI: sessions, chat, analytics, cron jobs, skills, config, logs.
+
+  ```
+  $ foph dashboard --port 3000
+  Dashboard running at http://localhost:3000
+  ```
+
+  ### foph gateway --platform telegram
+  Start messaging gateway (webhook + agent loop). Requires platform credentials.
+
+  ```
+  $ export TELEGRAM_BOT_TOKEN=...
+  $ foph gateway --platform telegram --port 3001
+  Gateway listening at http://localhost:3001
+  ```
+
+  ## Full Reference
+
+  ### Session & History
+  - `foph sessions` — list recent sessions + search
+  - `foph search "<query>"` — full-text search over messages
+  - `foph resume <id>` — continue a session
+
+  ### Configuration
+  - `foph profile [list|create|switch|delete]` — multi-user profiles
+  - `foph skin [name]` — switch UI theme
+  - `foph config [key] [value]` — view/set config
+
+  ### Skills & Tools
+  - `foph skills` — list bundled + custom skills
+  - `foph skill <name>` — show skill details
+  - `foph tools` — list + filter tools
+
+  ### Workflows
+  - `foph cron [list|add|cancel|tick]` — scheduled jobs
+  - `foph batch <file>` — parallel task runner
+  - `foph acp` — JSON-RPC stdio for IDE integration
+
+  ### Help
+  - `foph help-all` — all slash commands (inside REPL)
+  - `foph -h` — command-line help
+
+  ## Slash Commands in REPL
 
   - `/help`, `/quit`, `/clear`
   - `/profile [list|switch <name>]`

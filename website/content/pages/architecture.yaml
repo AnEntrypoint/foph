@@ -5,19 +5,87 @@ body: |
 
   Foph is an open JS agent harness built with substrate-first construction. Internal modules stay small (<=200 lines) and compose through dependency-injected primitives.
 
-  ## Subsystem map
+  ## Agent Loop
 
-  - **agent loop** — `src/agent/machine.js` (xstate) + `src/agent/pi-bridge.js` (pi-ai adapter)
-  - **context compressor** — `src/agent/compress/{tokens,policy,prompt,prune,fallback,compressor}.js`
-  - **tools** — registry + 11 built-ins, auto-discovered from `src/tools/*.js`
-  - **execution environments** — `src/tools/environments/{local,docker,ssh}.js`
-  - **session store** — `src/sessions.js` (better-sqlite3 + FTS5)
-  - **gateway** — `src/gateway/run.js` + 18 platform adapters
-  - **ACP** — `src/acp/server.js` (JSON-RPC stdio for IDE plugins)
-  - **plugins + memory** — `src/plugins/manager.js` + 8 memory backends
-  - **commands + skin + skills + profiles** — `src/commands/`, `src/skin/`, `src/skills/`, `src/commands/profile.js`
-  - **observability** — `src/observability/{log,debug}.js`
-  - **CLI + REPL + dashboard** — `bin/foph.js`, `src/cli/interactive.js`, `src/web/`
+  Xstate turn machine that orchestrates agent rounds: receive input → expand context → compress if needed → call LLM → dispatch tool calls → collect results → summarize → emit.
+
+  - **Machine**: `src/agent/machine.js` (xstate v5 turn choreography)
+  - **LLM Bridge**: `src/agent/pi-bridge.js` (pi-ai provider adapter)
+  - **Substrate**: `@mariozechner/pi-agent-core` (runAgentLoop, agentLoop)
+
+  ## Context Engine & Compressor
+
+  Builds system message from file context, skills, memory, tools. Compresses history when budget exceeded using head/middle/tail policy.
+
+  - **Builder**: `src/context/engine.js` (blocksToSystemMessage)
+  - **Compressor**: `src/agent/compress/` (policy, tokens, prune, prompt, fallback)
+  - **Strategy**: head/middle/tail cutoff; preserve recent context; maintain handoff invariant
+
+  ## Tool Registry
+
+  11 built-in tools auto-discovered. Tools run in execution environments: local (subprocess), docker (podman), ssh (remote).
+
+  - **Registry**: `src/tools/registry.js` (registration + schema introspection)
+  - **Tools**: bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser
+  - **Environments**: `src/tools/environments/{local,docker,ssh}.js`
+
+  ## Gateway & Platforms
+
+  16 functional adapters for inbound messaging. Each adapter extends EventEmitter, emits 'message' events. Supported: Telegram, Discord, Slack, email, SMS, WhatsApp, Matrix, Signal, Dingtalk, Feishu, WeChat, QQ, Mattermost, Zulip, BlueBubbles, Misskey.
+
+  - **Gateway**: `src/gateway/run.js` (event hub + agent wiring)
+  - **Platforms**: `src/gateway/platforms/*.js` (adapter implementations)
+  - **Hooks**: gateway-level filtering + rate limiting
+
+  ## Session Store
+
+  Persistent history + FTS5 full-text search. Schema: session_id, turns (JSON), metadata, created_at, updated_at.
+
+  - **Store**: `src/sessions.js` (better-sqlite3)
+
+  ## Memory & Plugins
+
+  8 provider backends: Honcho, Mem0, Supermemory, Byterover, Hindsight, Openviking, Retaindb, Holographic. Plugin manager handles lifecycle + health.
+
+  - **Providers**: `src/plugins/memory/{honcho,mem0,supermemory,byterover,hindsight,openviking,retaindb,holographic}.js`
+  - **Manager**: `src/plugins/manager.js`
+  - **Tool**: `src/tools/memory.js` (store/recall/search)
+
+  ## Skills
+
+  Bundled SKILL.md files in 5 categories: creative, software-development, ops, data, planning. User can extend via ~/.foph/skills/.
+
+  - **Loader**: `src/skills/index.js` (discovers ~/.foph/skills/ + bundled)
+  - **Format**: SKILL.md markdown (name, description, examples, tools)
+
+  ## Dashboard Web UI
+
+  anentrypoint-design webjsx + ripple-ui. 14 routes: home, chat (SSE live), sessions, analytics, cron, batch, tools, models, skills, logs, config, env, docs, gateway.
+
+  - **App**: `src/web/app.js` (547L, Section + motion + chat)
+  - **Server**: `src/web/server.js` (express + /api endpoints)
+  - **Framework**: webjsx (no React)
+
+  ## Auth & Profiles
+
+  FileAuthStore for credential persistence. Profile support for multi-user isolation.
+
+  - **Auth**: `src/auth.js` (credential storage + pi-ai integration)
+  - **Home**: `src/home.js` (getFophHome, profile-safe paths)
+
+  ## Cron & Batch
+
+  Cron scheduler for recurring workflows. Batch runner for parallel task execution.
+
+  - **Cron**: `src/cron/{scheduler,cron-parse}.js` (persistent jobs, syntax parser)
+  - **Batch**: `src/batch.js` (Promise.allSettled, aggregation)
+
+  ## Observability
+
+  Structured logging (JSONL) + /debug endpoints. window.__debug for client introspection.
+
+  - **Logs**: `src/observability/log.js` (events: subsystem, severity, ts, fields)
+  - **Debug**: `src/observability/debug.js` (/debug/subsystem endpoints)
 
   ## Conventions
 

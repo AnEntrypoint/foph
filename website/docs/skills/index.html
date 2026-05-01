@@ -23,13 +23,25 @@ footer { padding: 24px; text-align: center; color: #6b7280; }
 <body>
 <header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="active" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
 <main><h1>Skills</h1>
-<p>Skills are markdown files with YAML frontmatter, scanned from:</p>
+<p>5 bundled skill categories + user-extensible via <code>~/.foph/skills/</code>.</p>
+<h2>Bundled Categories</h2>
+<h3>Creative</h3>
+<p>ASCII video generation, architecture diagrams, concept sketching. 3 skills.</p>
+<h3>Software Development</h3>
+<p>Systematic debugging, code review, RFC authoring. 3 skills.</p>
+<h3>Operations</h3>
+<p>Incident response, log triage. 2 skills.</p>
+<h3>Data</h3>
+<p>ETL pipelines, SQL explanation. 2 skills.</p>
+<h3>Planning</h3>
+<p>Weekly review, OKR drafting. 2 skills.</p>
+<h2>Custom Skills</h2>
+<p>Drop additional <code>SKILL.md</code> files in:</p>
 <ul>
-<li><code>~/.foph/skills/</code></li>
-<li><code>&lt;cwd&gt;/skills/</code></li>
-<li>any path passed to <code>listSkills([extraDirs])</code></li>
+<li><code>~/.foph/skills/</code> (user directory, always auto-discovered)</li>
+<li><code>&lt;cwd&gt;/skills/</code> (project directory, scanned on startup)</li>
 </ul>
-<h2>SKILL.md shape</h2>
+<h2>SKILL.md Shape</h2>
 <pre>
 ---
 name: my-skill
@@ -41,16 +53,7 @@ platforms: [linux, macos, windows]   # optional gating
 # Body
 
 Free-form markdown. Injected as a user message when invoked via /skill &lt;name&gt;.
-</pre>
-<h2>Bundled categories</h2>
-<ul>
-<li><strong>creative</strong> — ascii-video, architecture-diagram, concept-diagrams</li>
-<li><strong>software-development</strong> — systematic-debugging, code-review, rfc-writer</li>
-<li><strong>ops</strong> — incident-response, log-triage</li>
-<li><strong>data</strong> — etl-pipelines, sql-explainer</li>
-<li><strong>planning</strong> — weekly-review, okr-drafter</li>
-</ul>
-<p>Drop additional <code>SKILL.md</code> files in any subdirectory under <code>skills/</code> and they appear automatically.</p></main>
+</pre></main>
 <footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
 </body>
 </html>
