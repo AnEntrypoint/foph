@@ -29,6 +29,9 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: List artifact contents
+        run: ls -laR website/docs/ | head -50
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
