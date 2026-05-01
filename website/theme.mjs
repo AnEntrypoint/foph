@@ -8,38 +8,7 @@ const NAV = [
     { href: '/development/', label: 'Development', slug: 'development' },
 ]
 
-function shell(title, body, activeSlug) {
-    return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
-<style>
-:root { color-scheme: dark; }
-body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
-header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
-header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
-header a.active { text-decoration: underline; }
-main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
-h1 { color: #FFD700; margin-top: 0; }
-h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
-code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
-pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
-a { color: #76b6ff; }
-nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-footer { padding: 24px; text-align: center; color: #6b7280; }
-</style>
-</head>
-<body>
-<header><nav>${NAV.map(n => `<a class="${n.slug === activeSlug ? 'active' : ''}" href="${n.href}">${n.label}</a>`).join('')}</nav></header>
-<main>${body}</main>
-<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
-</body>
-</html>`
-}
-
-function mdToHtml(md) {
+function renderMarkdown(md) {
     const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     const lines = md.split('\n')
     const out = []
@@ -65,10 +34,6 @@ function inlineMd(s) {
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
 }
 
-function pageHtml(page, activeSlug) {
-    return shell(page.title || 'Foph', mdToHtml(page.body || ''), activeSlug)
-}
-
 export default {
     assets: {},
     async render({ read }) {
@@ -78,7 +43,55 @@ export default {
         for (const page of pages) {
             const slug = page.slug || page.id || 'index'
             const path = (slug === 'home' || slug === 'index') ? 'index.html' : `${slug}/index.html`
-            outputs.push({ path, html: pageHtml(page, slug) })
+            const title = page.title || 'Foph'
+
+            const bodyHtml = renderMarkdown(page.body || '')
+
+            const html = `<!doctype html>
+<html lang="en" class="ds-247420" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title} — Foph</title>
+<link rel="stylesheet" href="https://unpkg.com/anentrypoint-design@latest/dist/247420.css">
+<script type="importmap">
+{ "imports": { "anentrypoint-design": "https://unpkg.com/anentrypoint-design@latest/dist/247420.js" } }
+</script>
+<style>
+.page-body h1 { margin-top: 0; }
+.page-body h2 { margin-top: 32px; }
+.page-body h3 { margin-top: 24px; }
+.page-body pre { margin: 12px 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { mount, components as C } from 'anentrypoint-design';
+const navItems = ${JSON.stringify(NAV.map(n => [n.label, n.href]))};
+const pageSlug = '${slug}';
+const pageTitle = '${title}';
+const pageBody = \`${bodyHtml}\`;
+
+mount(document.getElementById('app'), () => C.AppShell({
+  topbar: C.Topbar({ brand: 'Foph', items: navItems }),
+  crumb: C.Crumb({ leaf: pageTitle }),
+  main: C.Section({
+    id: 'main',
+    children: [
+      C.Panel({
+        children: [
+          C.h(null, { innerHTML: pageBody, className: 'page-body' })
+        ]
+      })
+    ]
+  }),
+  status: C.Status({ left: ['main'], right: ['live'] })
+}));
+</script>
+</body>
+</html>`
+            outputs.push({ path, html })
         }
         return outputs
     },
