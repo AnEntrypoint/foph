@@ -1,6 +1,6 @@
-import ds, { mount, installStyles, h, components, renderMarkdown } from 'anentrypoint-design'
+import ds, { mount, installStyles, h, components, renderMarkdown, motion } from 'anentrypoint-design'
 const { AppShell, Topbar, Crumb, Side, Status, Panel, Row, Btn, Chip, Chat, ChatComposer, ChatMessage, AICat,
-    Brand, EmptyState, RowLink, Receipt, Changelog, Hero, ConfirmDialog } = components
+    Brand, EmptyState, RowLink, Receipt, Changelog, Hero, ConfirmDialog, Section, Install } = components
 
 await installStyles()
 
@@ -21,9 +21,9 @@ const ROUTES = [
     { path: '#/config',    label: 'Config',        glyph: '⚙' },
     { path: '#/env',       label: 'Keys',          glyph: '⚿' },
     { path: '#/docs',      label: 'Documentation', glyph: '✎' },
-    { path: '#/tools',    label: 'Tools',         glyph: '⚒' },
-    { path: '#/batch',    label: 'Batch',         glyph: '⊞' },
-    { path: '#/gateway',  label: 'Gateway',       glyph: '⇌' },
+    { path: '#/tools',     label: 'Tools',         glyph: '⚒' },
+    { path: '#/batch',     label: 'Batch',         glyph: '⊞' },
+    { path: '#/gateway',   label: 'Gateway',       glyph: '⇌' },
 ]
 window.__debug.routes = () => ROUTES.map(r => r.path)
 
@@ -35,6 +35,7 @@ const AppState = {
     search: { query: '', results: [] },
     sessionsFilter: '',
     chat: { messages: [], draft: '', streaming: false },
+    batch: { results: null, running: false },
 }
 function applyTheme() { document.documentElement.setAttribute('data-theme', AppState.theme) }
 applyTheme()
@@ -60,7 +61,6 @@ function timeNow() {
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
 }
 
-// Map an internal {role, content, tool_calls, tool_call_id} message to SDK ChatMessage props.
 function toChatMsg(m, key) {
     const time = m.time || ''
     if (m.role === 'user') {
@@ -72,7 +72,6 @@ function toChatMsg(m, key) {
         return { who: 'them', avatar: '⚒', name: 'tool' + (m.tool_call_id ? ' · ' + String(m.tool_call_id).slice(0, 8) : ''), time, key,
             parts: [{ kind: 'code', lang: 'json', filename: 'tool result', code: body }] }
     }
-    // assistant
     const parts = []
     const text = typeof m.content === 'string' ? m.content : ''
     if (text) parts.push({ kind: 'md', text })
@@ -146,20 +145,49 @@ const PAGES = {
         const [sessions, tools, debug] = await Promise.all([j('/api/sessions'), j('/api/tools'), j('/api/debug')])
         const all = Array.isArray(sessions) ? sessions : []
         const ts = Array.isArray(tools) ? tools : []
+        const byPlatform = all.reduce((acc, s) => { const k = s.platform || 'unknown'; acc[k] = (acc[k] || 0) + 1; return acc }, {})
+        const byModel = all.reduce((acc, s) => { const k = s.model || 'unknown'; acc[k] = (acc[k] || 0) + 1; return acc }, {})
         return [
             kpi([
                 [all.length || 0, 'Sessions'],
                 [ts.length || 0, 'Tools'],
                 [Array.isArray(debug) ? debug.length : 0, 'Debug subsystems'],
             ]),
-            Panel({ title: 'Tool distribution by toolset', children: table(['toolset', 'tools'],
-                Object.entries(ts.reduce((acc, t) => { (acc[t.toolset] = acc[t.toolset] || []).push(t.name); return acc }, {})).map(([k, v]) => [k, v.join(', ')])) }),
+            Panel({ title: 'Sessions by platform', children: Object.keys(byPlatform).length === 0
+                ? EmptyState({ text: 'no sessions yet', glyph: '◉' })
+                : table(['platform', 'count'], Object.entries(byPlatform).sort((a,b) => b[1]-a[1])) }),
+            Panel({ title: 'Sessions by model', children: Object.keys(byModel).length === 0
+                ? EmptyState({ text: 'no sessions yet', glyph: '◎' })
+                : table(['model', 'count'], Object.entries(byModel).sort((a,b) => b[1]-a[1])) }),
+            Panel({ title: 'Tool distribution by toolset', children: table(['toolset', 'count', 'tools'],
+                Object.entries(ts.reduce((acc, t) => { acc[t.toolset] = acc[t.toolset] || []; acc[t.toolset].push(t.name); return acc }, {}))
+                    .map(([k, v]) => [k, v.length, v.slice(0,4).join(', ') + (v.length > 4 ? '…' : '')])) }),
         ]
     },
 
     '#/models': async () => {
         const config = await j('/api/config')
-        return Panel({ title: 'Active model', children: pre({ provider: config.agent?.provider, model: config.agent?.model, max_iterations: config.agent?.max_iterations }) })
+        const agent = config.agent || {}
+        return [
+            kpi([[agent.provider || '—', 'Provider'], [agent.model || '—', 'Model']]),
+            Panel({ title: 'Active model config', children: Receipt({ rows: [
+                ['provider', agent.provider || '(not set)'],
+                ['model', agent.model || '(not set)'],
+                ['max_iterations', String(agent.max_iterations || '—')],
+                ['max_tokens', String(agent.max_tokens || '—')],
+                ['temperature', String(agent.temperature ?? '—')],
+            ]}) }),
+            Panel({ title: 'Change model', children: h('form', { class: 'row-form', onsubmit: async (ev) => {
+                ev.preventDefault()
+                const f = ev.target.elements
+                await j('/api/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: 'agent.model', value: f.model.value }) })
+                await j('/api/config', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: 'agent.provider', value: f.provider.value }) })
+                rerender()
+            } },
+                h('input', { name: 'provider', placeholder: 'provider (anthropic / openai / groq)', value: agent.provider || '' }),
+                h('input', { name: 'model', placeholder: 'model id (e.g. claude-opus-4-5)', value: agent.model || '' }),
+                h('button', { type: 'submit', class: 'primary' }, 'Update')) }),
+        ]
     },
 
     '#/logs': async () => {
@@ -169,11 +197,13 @@ const PAGES = {
         const recent = first ? await j(`/api/logs/${first}?max=50`) : []
         return [
             kpi([[list.length, 'Log subsystems']]),
-            Panel({ title: 'Subsystems', children: table(['name'], list.map(s => [s])) }),
+            Panel({ title: 'Subsystems', children: list.length === 0
+                ? EmptyState({ text: 'no logs yet — run foph and observe', glyph: '☰' })
+                : h('div', {}, ...list.map(s => Row({ key: s, code: '☰', title: s, meta: '' }))) }),
             first
-                ? Panel({ title: `Latest entries (${first})`, children: pre(recent) })
-                : Panel({ title: 'Latest entries', children: EmptyState({ text: 'no logs yet — run foph and observe', glyph: '☰' }) }),
-        ]
+                ? Panel({ title: `Latest entries · ${first}`, children: pre(recent) })
+                : null,
+        ].filter(Boolean)
     },
 
     '#/cron': async () => {
@@ -213,9 +243,11 @@ const PAGES = {
         return [
             kpi([[home.length, 'User skills'], [bundled.length, 'Bundled skills']]),
             Panel({ title: 'User skills (~/.foph/skills)', count: home.length,
-                children: table(['name', 'description'], home.map(s => [s.name, s.description || ''])) }),
+                children: home.length === 0
+                    ? EmptyState({ text: 'drop SKILL.md files in ~/.foph/skills/ to add', glyph: '◈' })
+                    : h('div', {}, ...home.map(s => Row({ key: s.name, code: '◈', title: s.name, sub: s.description || '', meta: '' }))) }),
             Panel({ title: 'Bundled skills', count: bundled.length,
-                children: table(['name', 'description'], bundled.map(s => [s.name, s.description || ''])) }),
+                children: h('div', {}, ...bundled.map(s => Row({ key: s.name, code: '◈', title: s.name, sub: s.description || '', meta: '' }))) }),
         ]
     },
 
@@ -239,7 +271,9 @@ const PAGES = {
                 h('input', { name: 'value', placeholder: 'value' }),
                 h('button', { type: 'submit', class: 'primary' }, 'Save')) }),
             Panel({ title: 'Profiles', count: (profiles || []).length,
-                children: (profiles || []).length === 0 ? EmptyState({ text: 'no profiles — using HOME', glyph: '◎' }) : table(['name'], profiles.map(p => [p])) }),
+                children: (profiles || []).length === 0
+                    ? EmptyState({ text: 'no profiles — using HOME', glyph: '◎' })
+                    : h('div', {}, ...(profiles || []).map(p => Row({ key: p, code: '◎', title: p, meta: '' }))) }),
             Panel({ title: 'Slash commands', count: (commands || []).length,
                 children: table(['name', 'category', 'description'], (commands || []).map(c => [c.name, c.category || '', c.description || ''])) }),
             Panel({ title: 'Active config', children: pre(config) }),
@@ -251,9 +285,11 @@ const PAGES = {
         const list = Array.isArray(keys) ? keys : []
         const set = list.filter(k => k.set).length
         return [
-            kpi([[set, 'keys set'], [list.length - set, 'keys missing']]),
-            Panel({ title: 'Environment variables', children: h('div', { style: 'padding:8px 4px;display:flex;flex-wrap:wrap;gap:6px' },
-                ...list.map(k => Chip({ tone: k.set ? 'ok' : 'miss', children: k.key + (k.set ? ' ✓' : ' ·') }))) }),
+            kpi([[set, 'Keys set'], [list.length - set, 'Keys missing'], [list.length, 'Total known']]),
+            Panel({ title: 'Environment variables',
+                right: h('span', {}, Chip({ tone: 'ok', children: set + ' set' }), ' ', Chip({ tone: 'miss', children: (list.length - set) + ' missing' })),
+                children: h('div', { style: 'padding:8px 4px;display:flex;flex-wrap:wrap;gap:6px' },
+                    ...list.map(k => Chip({ tone: k.set ? 'ok' : 'miss', children: k.key + (k.set ? ' ✓' : ' ·') }))) }),
         ]
     },
 
@@ -265,47 +301,94 @@ const PAGES = {
             kpi([[list.length, 'Total tools'], [Object.keys(byToolset).length, 'Toolsets']]),
             ...Object.entries(byToolset).map(([ts, ts_tools]) =>
                 Panel({ title: 'Toolset · ' + ts, count: ts_tools.length,
-                    children: table(['name', 'description'], ts_tools.map(t => [t.name, (t.schema?.description || '').slice(0, 80)])) }))
+                    children: h('div', {}, ...ts_tools.map(t =>
+                        Row({ key: t.name, code: '⚒', title: t.name, sub: (t.schema?.description || '').slice(0, 80), meta: '' }))) }))
         ]
     },
 
     '#/batch': async () => {
+        const results = AppState.batch.results
+        const running = AppState.batch.running
         return [
-            Panel({ title: 'Batch runner', children: h('div', {},
-                h('p', {}, 'Run prompts in parallel against the configured LLM. POST /api/batch with { prompts: string[], concurrency?: number, model?: string }.'),
-                h('form', { class: 'row-form', onsubmit: async (ev) => {
-                    ev.preventDefault()
-                    const f = ev.target.elements
-                    const prompts = f.prompts.value.split('\n').map(l => l.trim()).filter(Boolean)
-                    const res = await j('/api/batch', { method: 'POST', headers: { 'content-type': 'application/json' },
-                        body: JSON.stringify({ prompts, concurrency: Number(f.concurrency.value) || 4 }) })
-                    alert(res.__error ? 'Error: ' + res.__error : 'Batch ' + (res.id || '?') + ' — ' + (res.results?.length || 0) + ' results')
-                } },
-                    h('textarea', { name: 'prompts', rows: 5, placeholder: 'One prompt per line…', style: 'width:100%;font-family:monospace' }),
-                    h('input', { name: 'concurrency', type: 'number', value: '4', style: 'width:80px', placeholder: 'concurrency' }),
-                    h('button', { type: 'submit', class: 'primary' }, 'Run batch'))) }),
+            Section({ title: '// batch runner', children: [
+                Panel({ title: 'Run prompts', children: h('div', {},
+                    h('p', { style: 'margin-bottom:12px;opacity:0.7' }, 'Submit multiple prompts in parallel. Results stream back as JSONL. Each prompt runs a full agent turn.'),
+                    h('form', { class: 'row-form', style: 'flex-direction:column;gap:8px', onsubmit: async (ev) => {
+                        ev.preventDefault()
+                        const f = ev.target.elements
+                        const prompts = f.prompts.value.split('\n').map(l => l.trim()).filter(Boolean)
+                        if (!prompts.length) return
+                        AppState.batch.running = true; AppState.batch.results = null; rerender()
+                        const res = await j('/api/batch', { method: 'POST', headers: { 'content-type': 'application/json' },
+                            body: JSON.stringify({ prompts, concurrency: Number(f.concurrency.value) || 4 }) })
+                        AppState.batch.results = res; AppState.batch.running = false; rerender()
+                    } },
+                        h('textarea', { name: 'prompts', rows: 5, placeholder: 'One prompt per line…', style: 'width:100%;font-family:monospace;resize:vertical' }),
+                        h('div', { style: 'display:flex;gap:8px;align-items:center' },
+                            h('label', { style: 'font-size:12px;opacity:0.6' }, 'concurrency'),
+                            h('input', { name: 'concurrency', type: 'number', value: '4', style: 'width:60px' }),
+                            h('button', { type: 'submit', class: 'primary', disabled: running }, running ? 'running…' : 'Run batch')))) }),
+                running ? Panel({ title: 'Running…', children: EmptyState({ text: 'batch in progress', glyph: '⊞' }) }) : null,
+                results ? Panel({ title: results.__error ? 'Error' : 'Results · ' + (results.results?.length || 0),
+                    children: results.__error
+                        ? h('p', { style: 'color:var(--error,red)' }, results.__error)
+                        : h('div', {}, ...(results.results || []).map((r, i) =>
+                            Row({ key: i, code: String(i+1), title: (r.prompt || '').slice(0, 60), sub: (r.output || r.error || '').slice(0, 100), meta: r.error ? 'error' : 'ok' }))) }) : null,
+                Panel({ title: 'CLI usage', children: Receipt({ rows: [
+                    ['run batch file', 'foph batch prompts.txt'],
+                    ['set concurrency', 'foph batch prompts.txt --concurrency 8'],
+                    ['JSONL output', 'foph batch prompts.txt > results.jsonl'],
+                ]}) }),
+            ].filter(Boolean) }),
         ]
     },
 
     '#/gateway': async () => {
         const data = await j('/api/gateway')
         const platforms = Array.isArray(data?.platforms) ? data.platforms : []
+        const active = platforms.filter(p => p.enabled)
         return [
-            kpi([[platforms.length, 'Platforms'], [platforms.filter(p => p.enabled).length, 'Active']]),
-            Panel({ title: 'Platforms', children: table(['platform', 'enabled', 'note'],
-                platforms.map(p => [p.name, p.enabled ? 'yes' : 'no', p.note || ''])) }),
-            Panel({ title: 'Start gateway', children: h('p', {}, 'Run: ', h('code', {}, 'foph gateway --port 3000'), ' to start webhook + api_server adapters.') }),
+            kpi([[platforms.length, 'Platforms'], [active.length, 'Active']]),
+            Panel({ title: 'Platforms', right: active.length > 0 ? Chip({ tone: 'ok', children: active.length + ' active' }) : Chip({ tone: 'miss', children: 'none active' }),
+                children: h('div', {}, ...platforms.map(p =>
+                    Row({ key: p.name, code: p.enabled ? '●' : '○', title: p.name, sub: p.note || '', meta: p.enabled ? 'enabled' : '' }))) }),
+            Panel({ title: 'Start gateway', children: Receipt({ rows: [
+                ['webhook + api_server', 'foph gateway --port 3000'],
+                ['specific platform', 'TELEGRAM_BOT_TOKEN=xxx foph gateway'],
+                ['all platforms', 'set env vars per platform, then foph gateway'],
+            ]}) }),
         ]
     },
 
     '#/docs': async () => [
-        Panel({ title: 'Documentation', children: h('div', {},
-            h('p', {}, 'Foph — open JS agent harness. Full docs:'),
-            h('ul', {},
-                h('li', {}, h('a', { href: 'https://github.com/AnEntrypoint/foph', target: '_blank' }, 'GitHub: AnEntrypoint/foph')),
-                h('li', {}, h('a', { href: '/api/health', target: '_blank' }, '/api/health')),
-                h('li', {}, h('a', { href: '/api/debug-all', target: '_blank' }, '/api/debug-all'))),
-            EmptyState({ text: 'Static doc site lives under website/ — built with flatspace', glyph: '✎' })) }),
+        Section({ title: '// documentation', children: [
+            Panel({ title: 'foph — open JS agent harness', children: h('div', {},
+                h('p', { style: 'margin-bottom:16px;opacity:0.75;line-height:1.6' },
+                    'Built on pi-mono, xstate, floosie, and anentrypoint-design. 70+ tools, 18 gateway platforms, 12 bundled skills.'),
+                Receipt({ rows: [
+                    ['agent loop', 'xstate + @mariozechner/pi-agent-core'],
+                    ['provider layer', '@mariozechner/pi-ai (Anthropic / OpenAI / Groq)'],
+                    ['gateway', '18 platform adapters (telegram, discord, slack, …)'],
+                    ['tools', '11 built-ins + auto-discovered from src/tools/'],
+                    ['dashboard', 'anentrypoint-design webjsx'],
+                ] })) }),
+            Panel({ title: 'Links', children: h('div', {},
+                RowLink({ code: '↗', title: 'GitHub · AnEntrypoint/foph', href: 'https://github.com/AnEntrypoint/foph' }),
+                RowLink({ code: '↗', title: 'API health', href: '/api/health' }),
+                RowLink({ code: '↗', title: 'Debug — all subsystems', href: '/api/debug-all' }),
+                RowLink({ code: '↗', title: 'anentrypoint-design', href: 'https://anentrypoint.io/design' }),
+            ) }),
+            Panel({ title: 'Quick reference', children: Receipt({ rows: [
+                ['interactive REPL', 'foph run'],
+                ['dashboard', 'foph dashboard --port 3000'],
+                ['gateway', 'foph gateway --port 4000'],
+                ['list tools', 'foph tools'],
+                ['list skills', 'foph skills'],
+                ['manage profiles', 'foph profile list'],
+                ['run batch', 'foph batch prompts.txt'],
+                ['search sessions', 'foph search "my query"'],
+            ]}) }),
+        ] }),
         Panel({ title: 'Recent changelog', children: Changelog({ entries: [
             { date: '2026-05-01', ver: 'v0.0.1', msg: 'Initial release — 70 tools, 18 gateway platforms, 12 bundled skills' },
             { date: '2026-05-01', ver: 'v0.1.0', msg: 'Dashboard routes: #/tools #/batch #/gateway, anentrypoint-design pro-rata upgrade' },
@@ -442,12 +525,11 @@ async function go() {
     AppState.ts = new Date().toLocaleTimeString()
     if (_mount) _mount()
     window.__debug.lastRoute = AppState.hash
+    requestAnimationFrame(() => motion.animateSelector('.app-main', 'fadeIn', { duration: 'var(--motion-base)' }))
 }
 
 function rerender() {
     AppState.ts = new Date().toLocaleTimeString()
-    // Live pages whose body depends on AppState (not just on /api/* fetches) must
-    // be recomputed on every rerender — otherwise the saved body is stale.
     if (AppState.hash === '#/chat') {
         Promise.resolve(PAGES['#/chat']()).then(b => { AppState.body = b; if (_mount) _mount() })
         return
