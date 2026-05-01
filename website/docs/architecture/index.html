@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — Foph</title>
+<style>
+:root { color-scheme: dark; }
+body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
+header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
+header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
+header a.active { text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+h1 { color: #FFD700; margin-top: 0; }
+h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
+code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
+pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
+a { color: #76b6ff; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+footer { padding: 24px; text-align: center; color: #6b7280; }
+</style>
+</head>
+<body>
+<header><nav><a class="" href="/">Home</a><a class="active" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
+<main><h1>Architecture</h1>
+<p>Foph is an open JS agent harness built with substrate-first construction. Internal modules stay small (&lt;=200 lines) and compose through dependency-injected primitives.</p>
+<h2>Subsystem map</h2>
+<ul>
+<li><strong>agent loop</strong> — <code>src/agent/machine.js</code> (xstate) + <code>src/agent/pi-bridge.js</code> (pi-ai adapter)</li>
+<li><strong>context compressor</strong> — <code>src/agent/compress/{tokens,policy,prompt,prune,fallback,compressor}.js</code></li>
+<li><strong>tools</strong> — registry + 11 built-ins, auto-discovered from <code>src/tools/*.js</code></li>
+<li><strong>execution environments</strong> — <code>src/tools/environments/{local,docker,ssh}.js</code></li>
+<li><strong>session store</strong> — <code>src/sessions.js</code> (better-sqlite3 + FTS5)</li>
+<li><strong>gateway</strong> — <code>src/gateway/run.js</code> + 18 platform adapters</li>
+<li><strong>ACP</strong> — <code>src/acp/server.js</code> (JSON-RPC stdio for IDE plugins)</li>
+<li><strong>plugins + memory</strong> — <code>src/plugins/manager.js</code> + 8 memory backends</li>
+<li><strong>commands + skin + skills + profiles</strong> — <code>src/commands/</code>, <code>src/skin/</code>, <code>src/skills/</code>, <code>src/commands/profile.js</code></li>
+<li><strong>observability</strong> — <code>src/observability/{log,debug}.js</code></li>
+<li><strong>CLI + REPL + dashboard</strong> — <code>bin/foph.js</code>, <code>src/cli/interactive.js</code>, <code>src/web/</code></li>
+</ul>
+<h2>Conventions</h2>
+<ul>
+<li>4-space indent, single quotes, no semicolons in JS</li>
+<li>One file = one concern; &lt;=200 lines</li>
+<li>No comments in code; documentation lives in markdown</li>
+<li>Every subsystem registers <code>/debug/&lt;name&gt;</code> for introspection</li>
+</ul></main>
+<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
+</body>
+</html>

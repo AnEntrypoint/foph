@@ -1,0 +1,31 @@
+title: Gateway platforms — Foph
+slug: platforms
+body: |
+  # Gateway platforms
+
+  Each adapter extends `EventEmitter`, exposes `getRequiredEnv()`, and emits `'message'` events.
+
+  ## Implemented adapters
+
+  - **webhook** — generic POST `/webhook` receiver
+  - **api_server** — generic `/messages` outbound buffer
+  - **telegram** — long-polling `getUpdates` + `sendMessage`
+  - **discord** — REST + gateway URL lookup
+  - **slack** — events webhook + `chat.postMessage`
+  - **whatsapp** — Meta Graph API webhook + `messages` endpoint
+  - **signal** — signal-cli HTTP bridge (`/v1/receive` + `/v2/send`)
+  - **matrix** — sync long-poll + send
+  - **mattermost** — incoming hook + posts API
+  - **email** — SMTP via raw socket (EHLO/AUTH LOGIN/MAIL/RCPT/DATA)
+  - **sms** — Twilio webhook + Messages API
+  - **dingtalk, wecom, weixin, feishu, qqbot, bluebubbles, homeassistant** — generic webhook + REST send
+
+  ## Required environment variables
+
+  Each adapter throws on `start()` if its credentials are absent. Inspect via:
+
+  ```js
+  import { TelegramAdapter } from 'foph/src/gateway/platforms/telegram.js'
+  const a = new TelegramAdapter({})
+  a.getRequiredEnv() // ['TELEGRAM_BOT_TOKEN']
+  ```

@@ -1,0 +1,30 @@
+title: CLI — Foph
+slug: cli
+body: |
+  # CLI
+
+  ```
+  foph tools                          # list tools
+  foph skills                         # list bundled skills
+  foph profile [list|create|switch|delete] [name]
+  foph skin [name]                    # active or switch
+  foph sessions                       # recent sessions
+  foph search "<query>"               # FTS5 over messages
+  foph gateway --port <port>          # webhook + api_server
+  foph acp                            # JSON-RPC stdio
+  foph run                            # interactive REPL
+  foph cron [list|add|cancel|delete|tick] [args]
+  foph batch <file> --concurrency <n>
+  foph dashboard --port <port>
+  foph help-all                       # all slash commands
+  ```
+
+  ## Slash commands inside REPL
+
+  - `/help`, `/quit`, `/clear`
+  - `/profile [list|switch <name>]`
+  - `/sessions`, `/search <query>`, `/resume <id>`
+  - `/model [name]`, `/provider [name]`
+  - `/toolsets`, `/tools`, `/skills`, `/skill <name>`
+  - `/memory`, `/skin [name]`, `/config [key] [value]`
+  - `/logs`, `/status`, `/copy`, `/paste`, `/reset`

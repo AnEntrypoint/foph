@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLI — Foph</title>
+<style>
+:root { color-scheme: dark; }
+body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
+header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
+header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
+header a.active { text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+h1 { color: #FFD700; margin-top: 0; }
+h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
+code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
+pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
+a { color: #76b6ff; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+footer { padding: 24px; text-align: center; color: #6b7280; }
+</style>
+</head>
+<body>
+<header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="active" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
+<main><h1>CLI</h1>
+<pre>
+foph tools                          # list tools
+foph skills                         # list bundled skills
+foph profile [list|create|switch|delete] [name]
+foph skin [name]                    # active or switch
+foph sessions                       # recent sessions
+foph search "&lt;query&gt;"               # FTS5 over messages
+foph gateway --port &lt;port&gt;          # webhook + api_server
+foph acp                            # JSON-RPC stdio
+foph run                            # interactive REPL
+foph cron [list|add|cancel|delete|tick] [args]
+foph batch &lt;file&gt; --concurrency &lt;n&gt;
+foph dashboard --port &lt;port&gt;
+foph help-all                       # all slash commands
+</pre>
+<h2>Slash commands inside REPL</h2>
+<ul>
+<li><code>/help</code>, <code>/quit</code>, <code>/clear</code></li>
+<li><code>/profile [list|switch &lt;name&gt;]</code></li>
+<li><code>/sessions</code>, <code>/search &lt;query&gt;</code>, <code>/resume &lt;id&gt;</code></li>
+<li><code>/model [name]</code>, <code>/provider [name]</code></li>
+<li><code>/toolsets</code>, <code>/tools</code>, <code>/skills</code>, <code>/skill &lt;name&gt;</code></li>
+<li><code>/memory</code>, <code>/skin [name]</code>, <code>/config [key] [value]</code></li>
+<li><code>/logs</code>, <code>/status</code>, <code>/copy</code>, <code>/paste</code>, <code>/reset</code></li>
+</ul></main>
+<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
+</body>
+</html>

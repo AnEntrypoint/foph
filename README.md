@@ -1,0 +1,130 @@
+# Foph
+
+An open JS agent harness built on pi-mono, xstate, floosie, and anentrypoint-design. Features a full gateway, context compressor, multi-platform adapters, and a live dashboard — built with:
+
+- [`@mariozechner/pi-coding-agent`](https://www.npmjs.com/package/@mariozechner/pi-coding-agent) — agent + tools + interactive TUI substrate
+- [`@mariozechner/pi-agent-core`](https://www.npmjs.com/package/@mariozechner/pi-agent-core) — agent loop primitives
+- [`@mariozechner/pi-ai`](https://www.npmjs.com/package/@mariozechner/pi-ai) — provider abstraction (Anthropic / OpenAI / Groq / …)
+- [`@mariozechner/pi-tui`](https://www.npmjs.com/package/@mariozechner/pi-tui) — TUI primitives
+- [`floosie`](https://www.npmjs.com/package/floosie) — gateway stream pipeline (xstate-backed)
+- [`xstate`](https://www.npmjs.com/package/xstate) — agent turn machine + lifecycle state machines
+- [`anentrypoint-design`](https://www.npmjs.com/package/anentrypoint-design) — webjsx + ripple-ui design system (replaces React for the dashboard)
+- [`flatspace`](https://www.npmjs.com/package/flatspace) — flat-file CMS + static site builder (powers the `website/` documentation site)
+
+See [AGENTS.md](./AGENTS.md) for the full subsystem guide and residual complement.
+
+## Install
+
+```sh
+cd c:/dev/foph
+npm install
+```
+
+## Use
+
+```sh
+# List tools (>=11 registered)
+node bin/foph.js tools
+
+# All slash-style commands
+node bin/foph.js help-all
+
+# Interactive REPL (skin-aware, slash commands routed via registry)
+node bin/foph.js run
+
+# Profile management (~/.foph/profiles/*)
+node bin/foph.js profile list
+node bin/foph.js profile create coder
+node bin/foph.js profile switch coder
+
+# Skin engine (default | ares | mono | slate)
+node bin/foph.js skin
+node bin/foph.js skin ares
+
+# Sessions and search
+node bin/foph.js sessions
+node bin/foph.js search "<query>"
+
+# Cron scheduler (persistent jobs in SQLite)
+node bin/foph.js cron list
+node bin/foph.js cron add "*/5 * * * *" "summarize my email"
+node bin/foph.js cron tick
+
+# Batch runner (parallel runs, JSONL output)
+node bin/foph.js batch prompts.txt --concurrency 4
+
+# Web dashboard (express + anentrypoint-design webjsx)
+node bin/foph.js dashboard --port 3000
+
+# Gateway (webhook + api_server + 16 platform adapters)
+node bin/foph.js gateway --port 3000
+
+# ACP server (JSON-RPC over stdio for IDE integrations)
+node bin/foph.js acp
+```
+
+## Tools
+
+Built-in: `bash`, `read`, `write`, `edit`, `grep`, `todo`, `memory`, `delegate`, `web_search`, `image_gen`, `browser`. Auto-discovered from `src/tools/*.js`.
+
+## Platforms
+
+`src/gateway/platforms/`: webhook, api_server, telegram, discord, slack, whatsapp, signal, matrix, mattermost, email, sms, dingtalk, wecom, weixin, feishu, qqbot, bluebubbles, homeassistant. Each adapter exposes `getRequiredEnv()` and throws clear messages when credentials are absent.
+
+## Memory providers
+
+`src/plugins/memory/`: honcho, mem0, supermemory, byterover, hindsight, holographic (local-FS), openviking, retaindb. Set `memory.provider` in `~/.foph/config.yaml` and the corresponding `*_API_KEY`.
+
+## Layout
+
+```
+foph/
+├── bin/foph.js                  # commander CLI: tools, skills, profile, skin, sessions, search, gateway, acp, run, cron, batch, dashboard, help-all
+├── src/
+│   ├── home.js                   # getFophHome + profiles
+│   ├── config.js                 # YAML + migrations
+│   ├── sessions.js               # SQLite + FTS5
+│   ├── auth.js                   # FileAuthStore (~/.foph/auth/)
+│   ├── batch.js                  # parallel batch runner
+│   ├── tools/                    # registry + 11 built-in tools + environments/
+│   ├── toolsets.js
+│   ├── agent/{machine,pi-bridge}.js   # xstate turn machine + pi-ai bridge
+│   ├── commands/{registry,profile}.js # CommandDef + CRUD
+│   ├── cli/interactive.js        # readline REPL
+│   ├── context/engine.js         # pluggable context blocks
+│   ├── cron/{scheduler,cron-parse}.js
+│   ├── web/{server,index.html}   # dashboard
+│   ├── gateway/                  # Gateway + 18 platform adapters
+│   ├── acp/server.js             # JSON-RPC stdio
+│   ├── plugins/                  # PluginManager + 8 memory backends
+│   ├── skills/index.js           # SKILL.md loader
+│   ├── skin/engine.js            # 4 built-in skins, YAML user-skins
+│   └── observability/            # structured logs + /debug
+│   └── agent/compress/{tokens,policy,prompt,prune,fallback,compressor,index}.js  # context compressor
+├── skills/                       # bundled SKILL.md (creative, software-development, ops, data, planning)
+├── website/                      # flatspace-powered docs site (content/pages/*.yaml + theme.mjs)
+├── AGENTS.md
+├── CHANGELOG.md
+└── test.js                       # 21 named groups, ≤200 lines, real services
+```
+
+## Status
+
+Tier 0.3 complete and witnessed: 21 named tests passing, dashboard + website both live-witnessed via headless browser.
+
+- 16 gateway platforms with functional wire-format code (no throwing stubs)
+- 8 memory providers call real endpoints (or local-FS for `holographic`)
+- 11 built-in tools (bash/read/write/edit/grep/todo/memory/delegate/web_search/image_gen/browser)
+- Cron scheduler, parallel batch runner, auth store, context-engine, pi-ai bridge, interactive REPL
+- **Full context compressor** (`src/agent/compress/*`) with handoff-framed summary prefix, structured summarizer prompt, head/middle/tail policy, tool-output pre-pruning, summary-budget ratio, iterative summary update, and 600s failure cooldown
+- **Documentation site** at `website/` powered by `flatspace` (NOT docusaurus). Build with `cd website && node ../node_modules/flatspace/bin/flatspace.js build` — output to `website/docs/` for GitHub Pages.
+
+What's not in the box yet (residual, see AGENTS.md): real credentials per platform / memory backend; modal / daytona / singularity environments; bedrock / codex provider adapters.
+
+## Testing
+
+```sh
+node test.js
+```
+
+One integration test at root, ≤200 lines, plain assertions, real services. No fixtures, no mocks. Dashboard validation also runs through a live `exec:browser` witness during EMIT/VERIFY.

@@ -1,0 +1,48 @@
+title: Development — Foph
+slug: development
+body: |
+  # Development
+
+  ## Layout
+
+  ```
+  foph/
+  ├── bin/foph.js
+  ├── src/
+  │   ├── home.js, config.js, sessions.js, auth.js, batch.js, toolsets.js, index.js
+  │   ├── tools/{registry,bash,read,write,edit,grep,todo,memory,delegate,web_search,image_gen,browser}.js
+  │   ├── tools/environments/{local,docker,ssh,index}.js
+  │   ├── agent/{machine,pi-bridge}.js
+  │   ├── agent/compress/{tokens,policy,prompt,prune,fallback,compressor,index}.js
+  │   ├── commands/{registry,profile}.js
+  │   ├── cli/interactive.js
+  │   ├── context/engine.js
+  │   ├── cron/{scheduler,cron-parse}.js
+  │   ├── web/{server,index.html}
+  │   ├── gateway/{run,platforms/*}.js
+  │   ├── acp/server.js
+  │   ├── plugins/{manager,memory/*}.js
+  │   ├── skills/index.js
+  │   ├── skin/engine.js
+  │   └── observability/{log,debug}.js
+  ├── skills/                     # bundled SKILL.md
+  ├── website/                    # this site (flatspace)
+  └── test.js                     # one integration test, <=200 lines
+  ```
+
+  ## Test
+
+  ```
+  node test.js
+  ```
+
+  Real services, real data, no mocks. Failure regresses to EXECUTE.
+
+  ## Build website
+
+  ```
+  cd website
+  node ../node_modules/flatspace/bin/flatspace.js build
+  ```
+
+  Output to `website/docs/` for GitHub Pages.

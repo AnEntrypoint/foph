@@ -1,0 +1,27 @@
+title: Architecture — Foph
+slug: architecture
+body: |
+  # Architecture
+
+  Foph is an open JS agent harness built with substrate-first construction. Internal modules stay small (<=200 lines) and compose through dependency-injected primitives.
+
+  ## Subsystem map
+
+  - **agent loop** — `src/agent/machine.js` (xstate) + `src/agent/pi-bridge.js` (pi-ai adapter)
+  - **context compressor** — `src/agent/compress/{tokens,policy,prompt,prune,fallback,compressor}.js`
+  - **tools** — registry + 11 built-ins, auto-discovered from `src/tools/*.js`
+  - **execution environments** — `src/tools/environments/{local,docker,ssh}.js`
+  - **session store** — `src/sessions.js` (better-sqlite3 + FTS5)
+  - **gateway** — `src/gateway/run.js` + 18 platform adapters
+  - **ACP** — `src/acp/server.js` (JSON-RPC stdio for IDE plugins)
+  - **plugins + memory** — `src/plugins/manager.js` + 8 memory backends
+  - **commands + skin + skills + profiles** — `src/commands/`, `src/skin/`, `src/skills/`, `src/commands/profile.js`
+  - **observability** — `src/observability/{log,debug}.js`
+  - **CLI + REPL + dashboard** — `bin/foph.js`, `src/cli/interactive.js`, `src/web/`
+
+  ## Conventions
+
+  - 4-space indent, single quotes, no semicolons in JS
+  - One file = one concern; <=200 lines
+  - No comments in code; documentation lives in markdown
+  - Every subsystem registers `/debug/<name>` for introspection

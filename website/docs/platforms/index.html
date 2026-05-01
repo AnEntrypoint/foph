@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gateway platforms — Foph</title>
+<style>
+:root { color-scheme: dark; }
+body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
+header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
+header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
+header a.active { text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+h1 { color: #FFD700; margin-top: 0; }
+h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
+code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
+pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
+a { color: #76b6ff; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+footer { padding: 24px; text-align: center; color: #6b7280; }
+</style>
+</head>
+<body>
+<header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="active" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
+<main><h1>Gateway platforms</h1>
+<p>Each adapter extends <code>EventEmitter</code>, exposes <code>getRequiredEnv()</code>, and emits <code>'message'</code> events.</p>
+<h2>Implemented adapters</h2>
+<ul>
+<li><strong>webhook</strong> — generic POST <code>/webhook</code> receiver</li>
+<li><strong>api_server</strong> — generic <code>/messages</code> outbound buffer</li>
+<li><strong>telegram</strong> — long-polling <code>getUpdates</code> + <code>sendMessage</code></li>
+<li><strong>discord</strong> — REST + gateway URL lookup</li>
+<li><strong>slack</strong> — events webhook + <code>chat.postMessage</code></li>
+<li><strong>whatsapp</strong> — Meta Graph API webhook + <code>messages</code> endpoint</li>
+<li><strong>signal</strong> — signal-cli HTTP bridge (<code>/v1/receive</code> + <code>/v2/send</code>)</li>
+<li><strong>matrix</strong> — sync long-poll + send</li>
+<li><strong>mattermost</strong> — incoming hook + posts API</li>
+<li><strong>email</strong> — SMTP via raw socket (EHLO/AUTH LOGIN/MAIL/RCPT/DATA)</li>
+<li><strong>sms</strong> — Twilio webhook + Messages API</li>
+<li><strong>dingtalk, wecom, weixin, feishu, qqbot, bluebubbles, homeassistant</strong> — generic webhook + REST send</li>
+</ul>
+<h2>Required environment variables</h2>
+<p>Each adapter throws on <code>start()</code> if its credentials are absent. Inspect via:</p>
+<pre>
+import { TelegramAdapter } from 'foph/src/gateway/platforms/telegram.js'
+const a = new TelegramAdapter({})
+a.getRequiredEnv() // ['TELEGRAM_BOT_TOKEN']
+</pre></main>
+<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
+</body>
+</html>

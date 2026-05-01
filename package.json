@@ -1,0 +1,59 @@
+{
+  "name": "@lanmower/foph",
+  "version": "0.0.4",
+  "type": "module",
+  "description": "Hermes-equivalent AI coding agent in JS, built on pi-mono + floosie + xstate + anentrypoint-design",
+  "bin": {
+    "foph": "./bin/foph.js"
+  },
+  "main": "./src/index.js",
+  "scripts": {
+    "start": "node bin/foph.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "@mariozechner/pi-agent-core": "^0.70.6",
+    "@mariozechner/pi-ai": "^0.70.6",
+    "@mariozechner/pi-coding-agent": "^0.70.6",
+    "@mariozechner/pi-tui": "^0.70.6",
+    "anentrypoint-design": "file:../anentrypoint-design",
+    "better-sqlite3": "^11.10.0",
+    "commander": "^14.0.0",
+    "express": "^5.0.0",
+    "flatspace": "^1.0.18",
+    "floosie": "^0.6.14",
+    "js-yaml": "^4.1.0",
+    "xstate": "^5.31.0",
+    "zod": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "skills/",
+    "README.md",
+    "CHANGELOG.md",
+    "AGENTS.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnEntrypoint/foph.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AnEntrypoint/foph/issues"
+  },
+  "homepage": "https://github.com/AnEntrypoint/foph#readme",
+  "license": "MIT",
+  "keywords": [
+    "ai",
+    "agent",
+    "llm",
+    "cli",
+    "coding-agent",
+    "foph",
+    "pi-mono",
+    "xstate"
+  ]
+}

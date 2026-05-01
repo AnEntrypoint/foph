@@ -1,0 +1,32 @@
+title: Foph
+slug: home
+body: |
+  # Foph
+
+  JavaScript rebuild of [hermes-agent](https://github.com/nousresearch/hermes-agent) user-visible behavior, with our preferred architecture.
+
+  ## Substrate
+
+  - **@mariozechner/pi-coding-agent + pi-agent-core + pi-ai + pi-tui** — agent loop, providers, TUI primitives.
+  - **floosie** — gateway stream pipeline (xstate-backed).
+  - **xstate** — agent turn machine + lifecycle.
+  - **anentrypoint-design** — webjsx + ripple-ui design system for the dashboard.
+  - **flatspace** — this very website (flat-file CMS + static site builder).
+
+  ## Quick start
+
+  ```
+  npm install
+  node bin/foph.js tools
+  node bin/foph.js run
+  node bin/foph.js dashboard --port 3000
+  ```
+
+  ## What works
+
+  - 21/21 integration tests passing
+  - 11 built-in tools (bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser)
+  - 16 functional gateway platforms
+  - 8 memory provider backends
+  - Cron scheduler, batch runner, web dashboard
+  - Full context compressor (head/middle/tail policy + handoff prompt + iterative updates + cooldown)

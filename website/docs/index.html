@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foph</title>
+<style>
+:root { color-scheme: dark; }
+body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
+header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
+header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
+header a.active { text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+h1 { color: #FFD700; margin-top: 0; }
+h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
+code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
+pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
+a { color: #76b6ff; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+footer { padding: 24px; text-align: center; color: #6b7280; }
+</style>
+</head>
+<body>
+<header><nav><a class="active" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
+<main><h1>Foph</h1>
+<p>JavaScript rebuild of <a href="https://github.com/nousresearch/hermes-agent">hermes-agent</a> user-visible behavior, with our preferred architecture.</p>
+<h2>Substrate</h2>
+<ul>
+<li><strong>@mariozechner/pi-coding-agent + pi-agent-core + pi-ai + pi-tui</strong> — agent loop, providers, TUI primitives.</li>
+<li><strong>floosie</strong> — gateway stream pipeline (xstate-backed).</li>
+<li><strong>xstate</strong> — agent turn machine + lifecycle.</li>
+<li><strong>anentrypoint-design</strong> — webjsx + ripple-ui design system for the dashboard.</li>
+<li><strong>flatspace</strong> — this very website (flat-file CMS + static site builder).</li>
+</ul>
+<h2>Quick start</h2>
+<pre>
+npm install
+node bin/foph.js tools
+node bin/foph.js run
+node bin/foph.js dashboard --port 3000
+</pre>
+<h2>What works</h2>
+<ul>
+<li>21/21 integration tests passing</li>
+<li>11 built-in tools (bash, read, write, edit, grep, todo, memory, delegate, web_search, image_gen, browser)</li>
+<li>16 functional gateway platforms</li>
+<li>8 memory provider backends</li>
+<li>Cron scheduler, batch runner, web dashboard</li>
+<li>Full context compressor (head/middle/tail policy + handoff prompt + iterative updates + cooldown)</li>
+</ul></main>
+<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
+</body>
+</html>

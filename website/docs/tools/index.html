@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tools — Foph</title>
+<style>
+:root { color-scheme: dark; }
+body { font: 15px/1.6 ui-sans-serif, system-ui, Segoe UI, Inter, sans-serif; margin: 0; background: #0e1014; color: #e6e8eb; }
+header { background: #15181f; border-bottom: 1px solid #262a33; padding: 14px 24px; }
+header a { color: #FFD700; text-decoration: none; margin-right: 16px; }
+header a.active { text-decoration: underline; }
+main { max-width: 920px; margin: 0 auto; padding: 28px 20px; }
+h1 { color: #FFD700; margin-top: 0; }
+h2 { color: #FFA500; border-bottom: 1px solid #262a33; padding-bottom: 4px; }
+code { background: #1a1d24; padding: 1px 6px; border-radius: 4px; }
+pre { background: #1a1d24; padding: 12px; border-left: 3px solid #FFD700; overflow-x: auto; }
+a { color: #76b6ff; }
+nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+footer { padding: 24px; text-align: center; color: #6b7280; }
+</style>
+</head>
+<body>
+<header><nav><a class="" href="/">Home</a><a class="" href="/architecture/">Architecture</a><a class="" href="/cli/">CLI</a><a class="active" href="/tools/">Tools</a><a class="" href="/platforms/">Platforms</a><a class="" href="/skills/">Skills</a><a class="" href="/development/">Development</a></nav></header>
+<main><h1>Tools</h1>
+<p>Auto-discovered from <code>src/tools/*.js</code>. Each tool registers schema, handler, optional <code>checkFn</code>, and <code>requiresEnv</code>.</p>
+<h2>Built-in</h2>
+<ul>
+<li><strong>bash</strong> — <code>cmd</code>, <code>cwd?</code>, <code>timeout_ms?</code>, <code>background?</code>. Cross-platform spawn.</li>
+<li><strong>read</strong> — <code>path</code>, <code>offset?</code>, <code>limit?</code>. Returns numbered lines.</li>
+<li><strong>write</strong> — <code>path</code>, <code>content</code>. Creates parent dirs.</li>
+<li><strong>edit</strong> — <code>path</code>, <code>old_string</code>, <code>new_string</code>, <code>replace_all?</code>. Refuses ambiguous matches.</li>
+<li><strong>grep</strong> — <code>pattern</code>, <code>path?</code>, <code>glob?</code>, <code>head_limit?</code>, <code>ignore_case?</code>. Recursive regex.</li>
+<li><strong>todo</strong> — <code>add|list|update|complete|delete</code> per-session todos in SQLite.</li>
+<li><strong>memory</strong> — <code>add|search|list</code>. Routes to configured provider; SQLite + FTS5 fallback.</li>
+<li><strong>delegate</strong> — sub-agent spawn with depth guard.</li>
+<li><strong>web_search</strong> — SerpAPI when keyed; DuckDuckGo HTML scrape fallback.</li>
+<li><strong>image_gen</strong> — OpenAI images / Replicate predictions.</li>
+<li><strong>browser</strong> — puppeteer-core (lazy). navigate / click / type / evaluate / screenshot / text.</li>
+</ul>
+<h2>Adding a tool</h2>
+<pre>
+import { registry } from './tools/registry.js'
+registry.register({
+    name: 'my_tool',
+    toolset: 'core',
+    schema: { name: 'my_tool', description: '…', parameters: {...} },
+    handler: async (args, ctx) =&gt; ({ ok: true }),
+    checkFn: () =&gt; !!process.env.MY_KEY,
+    requiresEnv: ['MY_KEY'],
+})
+</pre></main>
+<footer>Foph — built on pi-mono, flatspace, xstate, anentrypoint-design.</footer>
+</body>
+</html>

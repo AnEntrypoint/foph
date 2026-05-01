@@ -1,0 +1,34 @@
+title: Tools — Foph
+slug: tools
+body: |
+  # Tools
+
+  Auto-discovered from `src/tools/*.js`. Each tool registers schema, handler, optional `checkFn`, and `requiresEnv`.
+
+  ## Built-in
+
+  - **bash** — `cmd`, `cwd?`, `timeout_ms?`, `background?`. Cross-platform spawn.
+  - **read** — `path`, `offset?`, `limit?`. Returns numbered lines.
+  - **write** — `path`, `content`. Creates parent dirs.
+  - **edit** — `path`, `old_string`, `new_string`, `replace_all?`. Refuses ambiguous matches.
+  - **grep** — `pattern`, `path?`, `glob?`, `head_limit?`, `ignore_case?`. Recursive regex.
+  - **todo** — `add|list|update|complete|delete` per-session todos in SQLite.
+  - **memory** — `add|search|list`. Routes to configured provider; SQLite + FTS5 fallback.
+  - **delegate** — sub-agent spawn with depth guard.
+  - **web_search** — SerpAPI when keyed; DuckDuckGo HTML scrape fallback.
+  - **image_gen** — OpenAI images / Replicate predictions.
+  - **browser** — puppeteer-core (lazy). navigate / click / type / evaluate / screenshot / text.
+
+  ## Adding a tool
+
+  ```js
+  import { registry } from './tools/registry.js'
+  registry.register({
+      name: 'my_tool',
+      toolset: 'core',
+      schema: { name: 'my_tool', description: '…', parameters: {...} },
+      handler: async (args, ctx) => ({ ok: true }),
+      checkFn: () => !!process.env.MY_KEY,
+      requiresEnv: ['MY_KEY'],
+  })
+  ```

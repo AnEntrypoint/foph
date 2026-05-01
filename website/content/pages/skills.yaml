@@ -1,0 +1,35 @@
+title: Skills — Foph
+slug: skills
+body: |
+  # Skills
+
+  Skills are markdown files with YAML frontmatter, scanned from:
+
+  - `~/.foph/skills/`
+  - `<cwd>/skills/`
+  - any path passed to `listSkills([extraDirs])`
+
+  ## SKILL.md shape
+
+  ```
+  ---
+  name: my-skill
+  description: One-liner picked up by /skill list
+  category: software-development
+  platforms: [linux, macos, windows]   # optional gating
+  ---
+
+  # Body
+
+  Free-form markdown. Injected as a user message when invoked via /skill <name>.
+  ```
+
+  ## Bundled categories
+
+  - **creative** — ascii-video, architecture-diagram, concept-diagrams
+  - **software-development** — systematic-debugging, code-review, rfc-writer
+  - **ops** — incident-response, log-triage
+  - **data** — etl-pipelines, sql-explainer
+  - **planning** — weekly-review, okr-drafter
+
+  Drop additional `SKILL.md` files in any subdirectory under `skills/` and they appear automatically.
