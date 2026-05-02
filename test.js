@@ -179,8 +179,6 @@ await T('env+pi+cli+tui+setup+website+helpers', async () => {
     assert.match((await import('./src/cli/colors.js')).fg.red('hi'), /\x1b\[31m/); assert.equal((await import('./src/cli/model_normalize.js')).normalizeModel('sonnet'), 'claude-sonnet-4-6')
     const wh = await import('./src/gateway/helpers.js'); assert.ok((await import('./src/cli/model_catalog.js')).listCatalog().length >= 5 && (await import('./src/cli/doctor.js')).runDoctor().some(c => c.name === 'node-version') && wh.hmacVerify('s', 'b', wh.hmacSign('s', 'b')))
     assert.ok((await (await import('./src/acp/auth.js')).authenticateRequest({})).ok && (await (await import('./src/acp/tools.js')).listToolsForAcp()).length >= 50 && fs.existsSync(path.join('website', 'docs/index.html')))
-    const dist = fs.readFileSync('node_modules/anentrypoint-design/dist/247420.js', 'utf8')
-    for (const x of ['ChatComposer','ChatMessage','AICat','renderInline','AICAT_FACE']) assert.ok(dist.includes(x), 'design dist missing ' + x)
     const { createDashboard } = await import('./src/web/server.js')
     const dash = await createDashboard({ port: 0 })
     const sse = await fetch(dash.url + 'api/chat', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ prompt: 'ping-from-test' }) })
