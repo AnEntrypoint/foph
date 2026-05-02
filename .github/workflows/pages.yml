@@ -3,9 +3,6 @@ name: pages
 on:
   push:
     branches: [master]
-    paths:
-      - 'website/**'
-      - '.github/workflows/pages.yml'
 
 permissions:
   contents: read
