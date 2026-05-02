@@ -1,0 +1,212 @@
+- id: db-abstraction-layer
+  subject: Create database abstraction layer for sql.js polymorphism
+  status: pending
+  description: Design and implement a minimal DB abstraction (adapter pattern) that wraps sql.js, allowing single codebase to run in CLI (Node.js) and browser (wasm). Must support prepare(), exec(), transaction(), and FTS5 queries. Handle initialization, WAL pragma, table creation.
+  effort: medium
+  category: infra
+  route_family: execution
+  load: 0.8
+  failure_modes: ['API mismatch: sql.js prepare() returns different interface than better-sqlite3', 'FTS5 unavailable in sql.js (no extension support); must fallback to LIKE queries', 'In-browser persistence: sql.js is in-memory by default; need IndexedDB adapter or client-side export', 'Performance: sql.js is slower than native bindings; may need indexed access optimization']
+  route_fit: examined
+  authorization: witnessed
+  blocking: ['migrate-sessions-store', 'migrate-memory-tool', 'migrate-cron-jobs', 'migrate-account-usage', 'migrate-todos-file-state', 'migrate-skill-usage']
+  blockedBy: []
+  acceptance:
+    - Single DB module exports: db(), prepare(), exec(), transaction(), fts5Ready property
+    - Works in Node.js via sql.js npm package (in-memory or IndexedDB if provided)
+    - Works in browser via sql.js wasm, persists via IndexedDB adapter
+    - All existing prepare/exec calls work unmodified
+    - FTS5 gracefully unavailable with fallback to LIKE queries
+  edge_cases: ['In-memory DB for tests must reset cleanly', 'Concurrent writes in Node.js (sql.js is JS, not atomic)', 'Browser storage quotas']
+
+- id: replace-better-sqlite3
+  subject: Replace better-sqlite3 with sql.js in package.json and src/sessions.js
+  status: pending
+  description: Remove better-sqlite3 from dependencies. Add sql.js npm package. Update src/sessions.js to import from db abstraction instead of directly from better-sqlite3. Store db file to ~/.foph/state/sessions.db as buffer on disk, or load from IndexedDB in browser.
+  effort: small
+  category: infra
+  route_family: execution
+  load: 0.7
+  failure_modes: ['sql.js does not have same API as better-sqlite3 for WAL, pragma, or prepared statements', 'Persistence strategy (WASM file vs IndexedDB) not compatible with both CLI and browser']
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - npm ci succeeds without better-sqlite3 native module
+    - test.js runs and db() returns instance with prepare/exec/transaction methods
+    - Sessions can be created and queried
+  edge_cases: []
+
+- id: migrate-sessions-store
+  subject: Migrate sessions.js to sql.js - createSession, appendMessage, getMessages, search, listSessions
+  status: pending
+  description: Update src/sessions.js to use new db abstraction. Verify all 5 public functions work- createSession, appendMessage (with lastInsertRowid), getMessages, search (with FTS5 fallback), listSessions. Keep FTS5 try/catch and set _fts5_unavailable flag.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.6
+  failure_modes: ['lastInsertRowid not available in sql.js (different API)', 'FTS5 fully unavailable; LIKE fallback insufficient for perf', 'JSON serialization of tool_calls differs between sqlite and JS']
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer', 'replace-better-sqlite3']
+  acceptance:
+    - test.js sessions+FTS5 passes
+    - createSession returns valid UUID
+    - appendMessage returns lastInsertRowid
+    - search works with FTS5 or LIKE fallback
+  edge_cases: []
+
+- id: migrate-memory-tool
+  subject: Migrate memory tool to sql.js - memory_local table and FTS5
+  status: pending
+  description: Update src/tools/memory.js to use db abstraction. Preserve memory_local table and FTS5 search with LIKE fallback. Actions- add (returns lastInsertRowid), search (FTS5 or LIKE), list.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.5
+  failure_modes: ['FTS5 unavailable', 'lastInsertRowid API mismatch']
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - add action returns id
+    - search works (FTS5 or LIKE)
+    - list returns all items
+  edge_cases: []
+
+- id: migrate-cron-jobs
+  subject: Migrate cron scheduler to sql.js - cron_jobs table
+  status: pending
+  description: Update src/cron/scheduler.js to use db abstraction. Support createJob, listJobs, cancelJob, deleteJob, updateJob with lastInsertRowid.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.5
+  failure_modes: ['lastInsertRowid API mismatch']
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - createJob returns job id
+    - listJobs returns all enabled jobs
+    - cancelJob and deleteJob work
+  edge_cases: []
+
+- id: migrate-account-usage
+  subject: Migrate account_usage tracking to sql.js
+  status: pending
+  description: Update src/agent/account_usage.js to use db abstraction. Support record, totalForSession, totalLifetime, listRecent with lastInsertRowid.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.5
+  failure_modes: []
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - record inserts usage row
+    - totalForSession and totalLifetime return correct sums
+    - listRecent returns recent records
+  edge_cases: []
+
+- id: migrate-todos-file-state
+  subject: Migrate todos and file_state tools to sql.js
+  status: pending
+  description: Update src/tools/todo.js and src/tools/file_state.js to use db abstraction. Support add/list/update/delete/changed_in_session with lastInsertRowid.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.5
+  failure_modes: []
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - add action returns id
+    - list/update/delete work
+    - changed_in_session returns file set
+  edge_cases: []
+
+- id: migrate-skill-usage
+  subject: Migrate skill_usage tracking to sql.js
+  status: pending
+  description: Update src/tools/skill_usage.js to use db abstraction. Support record, top, recent queries.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.4
+  failure_modes: []
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - record inserts usage
+    - top returns stats
+    - recent returns records
+  edge_cases: []
+
+- id: update-test-db-cleanup
+  subject: Update test.js database cleanup for sql.js
+  status: pending
+  description: Verify test.js cleanup hooks work with sql.js (may need resetForTests to handle in-memory DB differently). Ensure no libuv handle leaks on Windows.
+  effort: small
+  category: refactor
+  route_family: execution
+  load: 0.4
+  failure_modes: []
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['db-abstraction-layer']
+  acceptance:
+    - test.js runs and exits cleanly
+    - no file descriptor leaks
+  edge_cases: ['Windows libuv cleanup']
+
+- id: browser-witness-dashboard
+  subject: Browser witness- test dashboard with sql.js backend and create/search sessions
+  status: pending
+  description: Start dashboard (node bin/foph.js dashboard), navigate to browser, create a session via API or dashboard UI, append messages, verify /api/sessions returns data, test search functionality. Confirm SQL.js is persisting and querying correctly in browser context.
+  effort: small
+  category: testing
+  route_family: boundary
+  load: 0.7
+  failure_modes: ['Dashboard fails to start', 'SQL.js IndexedDB persistence not working in browser', 'Search API returns empty']
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['migrate-sessions-store', 'migrate-memory-tool', 'migrate-cron-jobs', 'migrate-account-usage', 'migrate-todos-file-state', 'migrate-skill-usage']
+  acceptance:
+    - Dashboard boots at http://localhost/PORT
+    - /api/sessions returns session list
+    - Create session via API succeeds
+    - Search functionality works and returns results
+    - No browser console errors
+  edge_cases: []
+
+- id: verify-fts5-fallback
+  subject: Verify FTS5 graceful degradation to LIKE queries
+  status: pending
+  description: Confirm sessions.search(), memory.search() fall back to LIKE queries when FTS5 unavailable in sql.js. Test that fallback produces same results (or subset). Log warning when FTS5 not available.
+  effort: small
+  category: testing
+  route_family: boundary
+  load: 0.4
+  failure_modes: []
+  route_fit: examined
+  authorization: witnessed
+  blocking: []
+  blockedBy: ['migrate-sessions-store', 'migrate-memory-tool']
+  acceptance:
+    - search works with LIKE when FTS5 unavailable
+    - db._fts5_unavailable flag set correctly
+    - Results match or subset expected
+  edge_cases: []

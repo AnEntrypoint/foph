@@ -20,9 +20,9 @@ await T('home+config+skin', async () => {
 })
 await T('sessions+FTS5', async () => {
     const { createSession, appendMessage, getMessages, search } = await import('./src/sessions.js')
-    const sid = createSession({ platform: 'cli' })
-    for (const t of ['banana smoothie', 'sounds delicious', 'recipe please']) appendMessage(sid, { role: 'user', content: t })
-    assert.equal(getMessages(sid).length, 3); assert.ok(search('banana').length >= 1)
+    const sid = await createSession({ platform: 'cli' })
+    for (const t of ['banana smoothie', 'sounds delicious', 'recipe please']) await appendMessage(sid, { role: 'user', content: t })
+    assert.equal((await getMessages(sid)).length, 3); assert.ok((await search('banana')).length >= 1)
 })
 await T('tools+toolsets', async () => {
     const { registry, discoverBuiltinTools } = await import('./src/tools/registry.js')
@@ -97,7 +97,7 @@ await T('plugins+memory', async () => {
     const { metricsText, inc } = await import('./src/plugins/observability/index.js')
     inc('test_counter', 7); assert.match(metricsText(), /foph_counter\{name="test_counter"\} 7/)
     const { award, listAchievements } = await import('./src/plugins/achievements/index.js')
-    award('test-award'); assert.ok(listAchievements().some(a => a.name === 'test-award'))
+    await award('test-award'); assert.ok((await listAchievements()).some(a => a.name === 'test-award'))
 })
 await T('profiles+observability+auth+env+context+cron+batch+slash+skills', async () => {
     const cr = await import('./src/commands/registry.js')
@@ -121,7 +121,7 @@ await T('profiles+observability+auth+env+context+cron+batch+slash+skills', async
     const fix = path.join(TEST_HOME, 'fix'); fs.mkdirSync(fix, { recursive: true }); fs.writeFileSync(path.join(fix, '.foph-context'), 'hello-ctx')
     assert.ok((await (await import('./src/context/engine.js')).buildContext({ plugins: ['file'], options: { cwd: fix } })).find(b => b.body.includes('hello-ctx')))
     const cp = await import('./src/cron/cron-parse.js'); assert.ok(cp.matches(cp.parseCron('* * * * *'), new Date()))
-    const sch = await import('./src/cron/scheduler.js'); const id = sch.createJob({ cron: '*/5 * * * *', prompt: 'tick' }); assert.ok(sch.listJobs().some(j => j.id === id)); sch.deleteJob(id)
+    const sch = await import('./src/cron/scheduler.js'); const id = await sch.createJob({ cron: '*/5 * * * *', prompt: 'tick' }); assert.ok((await sch.listJobs()).some(j => j.id === id)); await sch.deleteJob(id)
     assert.equal((await (await import('./src/batch.js')).runBatch({ prompts: ['a', 'b', 'c'], concurrency: 2 })).results.length, 3)
 })
 await T('utils+time+redact+model-meta+agent-helpers', async () => {
@@ -155,8 +155,8 @@ await T('mcp+swe+distributions+account+credpool', async () => {
     const { listDistributions, getDistribution } = await import('./src/toolset_distributions.js')
     assert.ok(listDistributions().length >= 3); assert.ok(getDistribution('coder').enabledToolsets.includes('core'))
     const { record, totalLifetime } = await import('./src/agent/account_usage.js')
-    record({ sessionId: 't', model: 'm', promptTokens: 10, completionTokens: 5, costUsd: 0.01 })
-    assert.ok(totalLifetime().prompt >= 10)
+    await record({ sessionId: 't', model: 'm', promptTokens: 10, completionTokens: 5, costUsd: 0.01 })
+    assert.ok((await totalLifetime()).prompt >= 10)
     const cp = await import('./src/agent/credential_pool.js')
     cp.resetForTests(); process.env.TESTPROVIDER_API_KEYS = 'k1,k2,k3'
     assert.ok(['k1','k2','k3'].includes(cp.next('testprovider')))
