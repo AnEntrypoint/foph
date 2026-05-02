@@ -23,8 +23,7 @@
     "floosie": "^0.6.14",
     "js-yaml": "^4.1.0",
     "xstate": "^5.31.0",
-    "zod": "^4.0.0",
-    "anentrypoint-design": "file:../anentrypoint-design"
+    "zod": "^4.0.0"
   },
   "engines": {
     "node": ">=20.6.0"
