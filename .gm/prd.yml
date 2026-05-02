@@ -1,42 +1,3 @@
-- id: replace-sqljs-with-libsql
-  subject: Replace sql.js backend with libsql in src/db.js
-  status: completed
-  description: Swap sql.js Database for @libsql/client. Keep DbAdapter API intact. libsql for CLI via createConnection paths, sql.js deferred for browser. No new NPM packages beyond @libsql/client.
-  effort: medium
-  category: refactor
-  route_family: execution
-  load: 0.7
-  failure_modes: ["libsql API mismatch (prepare/run/exec shape)", "async propagation breakage", "FTS5 support difference"]
-  route_fit: examined
-  authorization: witnessed
-  blocking: []
-  blockedBy: []
-  acceptance:
-    - test.js runs, all 12 tests pass
-    - sessions.js functions with libsql backend (create/append/search)
-    - FTS5 graceful fallback verified with LIKE queries
-  edge_cases:
-    - libsql connection pooling not needed for CLI (single instance OK)
-    - SQL syntax parity between sql.js and libsql (both SQLite-compatible)
-
-- id: update-package-json
-  subject: Add @libsql/client dependency, remove sql.js
-  status: completed
-  description: npm install @libsql/client. Remove sql.js from package.json.
-  effort: small
-  category: infra
-  route_family: grounding
-  load: 0.1
-  failure_modes: []
-  route_fit: examined
-  authorization: witnessed
-  blocking: ["replace-sqljs-with-libsql"]
-  blockedBy: []
-  acceptance:
-    - @libsql/client in package.json
-    - npm ci passes
-  edge_cases: []
-
 - id: verify-libsql-fts5
   subject: Verify FTS5 MATCH support in libsql vs fallback to LIKE
   status: pending
@@ -54,7 +15,6 @@
     - document FTS5 behavior in src/db.js comment
     - test.js search behavior unchanged
   edge_cases: []
-
 - id: browser-witness-dashboard
   subject: Boot dashboard, verify no regressions after libsql switch
   status: pending
