@@ -1,15 +1,19 @@
 - id: fix-npm-dependency-spec
   subject: Remove file:// anentrypoint-design dependency from package.json
   status: completed
-  description: "package.json line 19 specifies \"anentrypoint-design\": \"file:../anentrypoint-design\", causing npm ci to force local resolution. theme.mjs uses only unpkg CDN (lines 56, 58). Remove this dependency entirely, verify no other src/ files import ../anentrypoint-design, regenerate lockfile via npm ci."
+  description: 'package.json line 19 specifies "anentrypoint-design": "file:../anentrypoint-design", causing npm ci to force local resolution. theme.mjs uses only unpkg CDN (lines 56, 58). Remove this dependency entirely, verify no other src/ files import ../anentrypoint-design, regenerate lockfile via npm ci.'
   effort: small
   category: infra
   route_family: boundary
   load: 0.95
-  failure_modes: ["lockfile remains oscillated","npm ci fails in CI","undetected remaining import of ../anentrypoint-design"]
+  failure_modes:
+    - lockfile remains oscillated
+    - npm ci fails in CI
+    - undetected remaining import of ../anentrypoint-design
   route_fit: dominant
   authorization: witnessed
-  blocking: ["validate-pages-deployment"]
+  blocking:
+    - validate-pages-deployment
   blockedBy: []
   acceptance:
     - package.json has no "anentrypoint-design" key in dependencies
@@ -21,7 +25,7 @@
 - id: revert-pages-workflow
   subject: Verify pages.yml uses npm ci (already correct)
   status: completed
-  description: "Summary indicated prior session incorrectly changed pages.yml to npm install. Verify current state: line 35 should be \"npm ci\" (the constraint for CI lockfile consistency). Inspection confirms line 35 already has \"npm ci\" — no change needed. Mark as complete."
+  description: 'Summary indicated prior session incorrectly changed pages.yml to npm install. Verify current state: line 35 should be "npm ci" (the constraint for CI lockfile consistency). Inspection confirms line 35 already has "npm ci" — no change needed. Mark as complete.'
   effort: small
   category: infra
   route_family: boundary
@@ -33,20 +37,49 @@
   blockedBy: []
   acceptance:
     - .github/workflows/pages.yml line 35 is "run: npm ci"
+  edge_cases: null
+- id: fix-pages-action-version
+  subject: Update GitHub Pages action to v5 (potential API bug workaround)
+  status: pending
+  description: Pages.yml uses actions/deploy-pages@v2. Runs 10-14 fail with GitHub API 404 'Cannot find any run with github.run_id <ID>' at artifact metadata lookup. Artifact uploads succeed; failure is GitHub's internal API inconsistency. Update deploy-pages action to latest version (v5+) to bypass potential v2 bug. Trigger workflow after update.
+  effort: small
+  category: infra
+  route_family: boundary
+  load: 0.6
+  failure_modes:
+    - workflow syntax error after action version bump
+    - deployment still fails with same API error
+  route_fit: examined
+  authorization: witnessed
+  blocking:
+    - validate-pages-deployment
+  blockedBy: []
+  acceptance:
+    - actions/deploy-pages updated to v5 or later in pages.yml
+    - workflow syntax validates
+    - Pages workflow triggered and runs to completion
   edge_cases:
+    - v5 action breaking changes
+    - API error persists (indicates external GitHub infrastructure issue)
 - id: validate-pages-deployment
   subject: Boot GitHub Pages, witness DOM/CSS/typography via browser
   status: pending
-  description: "After fix-npm-dependency-spec resolves lockfile, trigger Pages build. Boot deployed page (https://anentrypoint.github.io/foph or equivalent), exec:browser to navigate, page.evaluate asserting (1) page loads HTTP 200, (2) DOM has .ds-247420 scope, (3) Nunito/Archivo Black/JetBrains Mono fonts loaded, (4) panel tonal colors render (--panel-0 through --panel-3), (5) navbar, breadcrumb, section, panel layout present, (6) text renders at 14-15px body size."
+  description: After fix-pages-action-version resolves deployment. Boot deployed page (https://anentrypoint.github.io/foph or equivalent), exec:browser to navigate, page.evaluate asserting (1) page loads HTTP 200, (2) DOM has .ds-247420 scope, (3) Nunito/Archivo Black/JetBrains Mono fonts loaded, (4) panel tonal colors render (--panel-0 through --panel-3), (5) navbar, breadcrumb, section, panel layout present, (6) text renders at 14-15px body size.
   effort: medium
   category: infra
   route_family: execution
   load: 0.95
-  failure_modes: ["Page returns 404","CSS fails to load from unpkg","DOM structure broken","font rendering fails","layout collapses"]
+  failure_modes:
+    - Page returns 404
+    - CSS fails to load from unpkg
+    - DOM structure broken
+    - font rendering fails
+    - layout collapses
   route_fit: dominant
   authorization: witnessed
   blocking: []
-  blockedBy: ["fix-npm-dependency-spec"]
+  blockedBy:
+    - fix-pages-action-version
   acceptance:
     - Browser navigates to deployed Pages URL and receives HTTP 200
     - page.evaluate confirms window.innerWidth exists and page has html.ds-247420
@@ -58,3 +91,29 @@
     - CDN unpkg momentarily down
     - GitHub Pages deployment delay (wait up to 2min)
     - Browser cache stale (clear before witness)
+    - If v5 upgrade does not resolve API error, this item remains blockedBy external GitHub infrastructure failure
+- id: fix-lockfile-sync
+  subject: Regenerate package-lock.json to match package.json removal
+  status: pending
+  description: 'Item 1 removed anentrypoint-design from package.json. Lockfile still references anentrypoint-design@0.0.37. Run 15 failed: npm ci reports "Missing: anentrypoint-design@ from lock file". Fix: regenerate lockfile via npm install, verify sync, commit, push to trigger run 16.'
+  effort: small
+  category: infra
+  route_family: boundary
+  load: 0.8
+  failure_modes:
+    - lockfile regeneration fails
+    - npm install introduces unwanted changes
+    - CI still reports sync error after push
+  route_fit: examined
+  authorization: witnessed
+  blocking:
+    - fix-pages-action-version
+  blockedBy: []
+  acceptance:
+    - npm install completes without errors locally
+    - package-lock.json updated; anentrypoint-design entry removed
+    - git diff shows only lock file changes (no package.json)
+    - npm ci passes locally after regeneration
+  edge_cases:
+    - npm install upgrades unrelated packages (use npm install --legacy-peer-deps if needed)
+    - Lockfile contains non-deterministic ordering
