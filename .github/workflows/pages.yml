@@ -29,7 +29,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build website
         run: cd website && node ../node_modules/flatspace/bin/flatspace.js build
