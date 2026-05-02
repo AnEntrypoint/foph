@@ -8,7 +8,7 @@ async function initDb() {
     if (_initialized) return d
     _initialized = true
 
-    d.exec(`
+    await d.exec(`
         CREATE TABLE IF NOT EXISTS sessions (
             id TEXT PRIMARY KEY,
             platform TEXT, user_id TEXT, chat_id TEXT, thread_id TEXT,
@@ -23,19 +23,12 @@ async function initDb() {
         CREATE INDEX IF NOT EXISTS idx_msg_session ON messages(session_id, ts);
     `)
 
-    // Only create FTS5 if available (db._fts5_unavailable was set during db init)
-    console.log('[sessions.js] _fts5_unavailable:', d._fts5_unavailable);
-    if (!d._fts5_unavailable) {
-        console.log('[sessions.js] Creating FTS5 table and trigger...');
-        try {
-            d.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(content, session_id UNINDEXED, content='messages', content_rowid='id');`)
-            d.exec(`CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN INSERT INTO messages_fts(rowid, content, session_id) VALUES (new.id, new.content, new.session_id); END;`)
-        } catch (e) {
-            console.log('[sessions.js] FTS5 creation failed, marking unavailable');
-            d._fts5_unavailable = true
-        }
-    } else {
-        console.log('[sessions.js] Skipping FTS5, marked unavailable');
+    // libsql supports FTS5 natively; create FTS virtual table
+    try {
+        await d.exec(`CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(content, session_id UNINDEXED, content='messages', content_rowid='id')`)
+        await d.prepare(`CREATE TRIGGER IF NOT EXISTS messages_ai AFTER INSERT ON messages BEGIN INSERT INTO messages_fts(rowid, content, session_id) VALUES (new.id, new.content, new.session_id); END`).run()
+    } catch (e) {
+        console.log('[sessions.js] FTS5 creation failed:', e.message);
     }
 
     return d
@@ -49,7 +42,7 @@ export async function createSession({ platform = 'cli', userId = null, chatId = 
     const d = await db()
     const id = randomUUID()
     const now = Date.now()
-    d.prepare(`INSERT INTO sessions (id, platform, user_id, chat_id, thread_id, title, created_at, updated_at, model) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    await d.prepare(`INSERT INTO sessions (id, platform, user_id, chat_id, thread_id, title, created_at, updated_at, model) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .run(id, platform, userId, chatId, threadId, title, now, now, model)
     return id
 }
@@ -57,29 +50,32 @@ export async function createSession({ platform = 'cli', userId = null, chatId = 
 export async function appendMessage(sessionId, { role, content = '', toolCalls = null, toolCallId = null }) {
     const d = await db()
     const now = Date.now()
-    const info = d.prepare(`INSERT INTO messages (session_id, role, content, tool_calls, tool_call_id, ts) VALUES (?, ?, ?, ?, ?, ?)`)
+    const info = await d.prepare(`INSERT INTO messages (session_id, role, content, tool_calls, tool_call_id, ts) VALUES (?, ?, ?, ?, ?, ?)`)
         .run(sessionId, role, content, toolCalls ? JSON.stringify(toolCalls) : null, toolCallId, now)
-    d.prepare(`UPDATE sessions SET updated_at = ? WHERE id = ?`).run(now, sessionId)
+    await d.prepare(`UPDATE sessions SET updated_at = ? WHERE id = ?`).run(now, sessionId)
     return info.lastInsertRowid
 }
 
 export async function getMessages(sessionId) {
     const d = await db()
-    return d.prepare(`SELECT id, role, content, tool_calls, tool_call_id, ts FROM messages WHERE session_id = ? ORDER BY ts ASC, id ASC`).all(sessionId)
-        .map(r => ({ ...r, tool_calls: r.tool_calls ? JSON.parse(r.tool_calls) : null }))
+    const rows = await d.prepare(`SELECT id, role, content, tool_calls, tool_call_id, ts FROM messages WHERE session_id = ? ORDER BY ts ASC, id ASC`).all(sessionId)
+    return rows.map(r => ({ ...r, tool_calls: r.tool_calls ? JSON.parse(r.tool_calls) : null }))
 }
 
 export async function listSessions(limit = 50) {
     const d = await db()
-    return d.prepare(`SELECT id, platform, title, created_at, updated_at, model FROM sessions ORDER BY updated_at DESC LIMIT ?`).all(limit)
+    return await d.prepare(`SELECT id, platform, title, created_at, updated_at, model FROM sessions ORDER BY updated_at DESC LIMIT ?`).all(limit)
 }
 
 export async function search(query, limit = 20) {
     const d = await db()
-    if (d._fts5_unavailable) {
-        return d.prepare(`SELECT id, session_id, content FROM messages WHERE content LIKE ? ORDER BY ts DESC LIMIT ?`).all(`%${query}%`, limit)
+    // libsql supports FTS5 natively
+    try {
+        return await d.prepare(`SELECT m.id, m.session_id, m.content FROM messages_fts f JOIN messages m ON m.id = f.rowid WHERE messages_fts MATCH ? ORDER BY rank LIMIT ?`).all(query, limit)
+    } catch (e) {
+        // Fallback to LIKE if FTS5 fails
+        return await d.prepare(`SELECT id, session_id, content FROM messages WHERE content LIKE ? ORDER BY ts DESC LIMIT ?`).all(`%${query}%`, limit)
     }
-    return d.prepare(`SELECT m.id, m.session_id, m.content FROM messages_fts f JOIN messages m ON m.id = f.rowid WHERE messages_fts MATCH ? ORDER BY rank LIMIT ?`).all(query, limit)
 }
 
 export function closeDb() { return closeDbImpl() }
