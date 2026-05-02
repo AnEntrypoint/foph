@@ -1,73 +1,60 @@
-- id: revert-pages-workflow
-  subject: Revert npm install back to npm ci in pages.yml
-  status: pending
-  description: Previous session changed npm ci → npm install in line 34-35 of .github/workflows/pages.yml. This was incorrect; npm install does not resolve the root cause (file:// dependency cannot be resolved in CI). Revert to npm ci and implement proper fix.
-  effort: small
-  category: bug
-  route_family: execution
-  load: 0.8
-  failure_modes:
-    - Pages still fail to deploy if dependency resolution is broken
-  route_fit: examined
-  authorization: witnessed
-  blocking:
-    - fix-npm-dependency-spec
-  blockedBy: []
-  acceptance:
-    - pages.yml line 34-35 shows npm ci
-    - change committed and pushed
-  edge_cases:
-    - auto-release script may revert again
 - id: fix-npm-dependency-spec
-  subject: Fix anentrypoint-design dependency oscillation
-  status: pending
-  description: 'package.json oscillates between file:../anentrypoint-design (local) and ^0.0.29 (npm). CI uses npm ci which requires lockfile consistency. Root cause: auto-release script (likely in release tooling) reverts manual npm version fixes. Solution: Use unpkg CDN exclusively for theme.mjs runtime (already done) and remove file:// local dependency entirely. Verify no other code imports the local design repo.'
-  effort: medium
+  subject: Remove file:// anentrypoint-design dependency from package.json
+  status: completed
+  description: "package.json line 19 specifies \"anentrypoint-design\": \"file:../anentrypoint-design\", causing npm ci to force local resolution. theme.mjs uses only unpkg CDN (lines 56, 58). Remove this dependency entirely, verify no other src/ files import ../anentrypoint-design, regenerate lockfile via npm ci."
+  effort: small
   category: infra
   route_family: boundary
-  load: 0.9
-  failure_modes:
-    - Pages deployment continues to fail on npm ci
-    - manual npm version pins get reverted by CI
-    - lockfile/package.json mismatch triggers CI failures
+  load: 0.95
+  failure_modes: ["lockfile remains oscillated","npm ci fails in CI","undetected remaining import of ../anentrypoint-design"]
+  route_fit: dominant
+  authorization: witnessed
+  blocking: ["validate-pages-deployment"]
+  blockedBy: []
+  acceptance:
+    - package.json has no "anentrypoint-design" key in dependencies
+    - codesearch confirms zero imports of ../anentrypoint-design in src/
+    - npm ci completes successfully
+    - package-lock.json does not contain file:../ entries
+  edge_cases:
+    - Hidden import of anentrypoint-design from node_modules by transitive dep
+- id: revert-pages-workflow
+  subject: Verify pages.yml uses npm ci (already correct)
+  status: completed
+  description: "Summary indicated prior session incorrectly changed pages.yml to npm install. Verify current state: line 35 should be \"npm ci\" (the constraint for CI lockfile consistency). Inspection confirms line 35 already has \"npm ci\" — no change needed. Mark as complete."
+  effort: small
+  category: infra
+  route_family: boundary
+  load: 0.6
+  failure_modes: []
   route_fit: examined
   authorization: witnessed
-  blocking:
-    - validate-pages-deployment
-  blockedBy:
-    - revert-pages-workflow
+  blocking: []
+  blockedBy: []
   acceptance:
-    - package.json has no file:// dependency on anentrypoint-design
-    - package.json specifies npm version from unpkg (^0.0.29 or newer)
-    - lockfile regenerated and consistent
-    - verify no imports of ../anentrypoint-design in src/
-    - npm ci succeeds locally
+    - .github/workflows/pages.yml line 35 is "run: npm ci"
   edge_cases:
-    - auto-release tooling must not revert the fix
 - id: validate-pages-deployment
-  subject: Validate GitHub Pages deployment and live browser rendering
+  subject: Boot GitHub Pages, witness DOM/CSS/typography via browser
   status: pending
-  description: 'Once npm/CI pipeline is fixed, verify Pages builds successfully and deploys. Validate live rendering on GH Pages domain with exec:browser: check HTTP 200, DOM structure, pro-rata CSS styling, and typography. Fix any rendering issues.'
+  description: "After fix-npm-dependency-spec resolves lockfile, trigger Pages build. Boot deployed page (https://anentrypoint.github.io/foph or equivalent), exec:browser to navigate, page.evaluate asserting (1) page loads HTTP 200, (2) DOM has .ds-247420 scope, (3) Nunito/Archivo Black/JetBrains Mono fonts loaded, (4) panel tonal colors render (--panel-0 through --panel-3), (5) navbar, breadcrumb, section, panel layout present, (6) text renders at 14-15px body size."
   effort: medium
-  category: feature
+  category: infra
   route_family: execution
   load: 0.95
-  failure_modes:
-    - Pages still return 404 or error page
-    - CSS does not load from unpkg CDN
-    - webjsx components fail to mount
-    - AppShell/Topbar/Section not rendered
-  route_fit: examined
-  authorization: weak_prior
+  failure_modes: ["Page returns 404","CSS fails to load from unpkg","DOM structure broken","font rendering fails","layout collapses"]
+  route_fit: dominant
+  authorization: witnessed
   blocking: []
-  blockedBy:
-    - fix-npm-dependency-spec
+  blockedBy: ["fix-npm-dependency-spec"]
   acceptance:
-    - GitHub Pages URL returns HTTP 200
-    - 'exec:browser witness: page.goto(pages_url) succeeds'
-    - 'page.evaluate confirms DOM has #app root with AppShell children'
-    - pro-rata CSS classes applied (e.g., tonal-surface, indicator-rail)
-    - typography stack correct (Archivo, Nunito, JetBrains Mono)
-    - all page sections render without JS errors
+    - Browser navigates to deployed Pages URL and receives HTTP 200
+    - page.evaluate confirms window.innerWidth exists and page has html.ds-247420
+    - Topbar, Breadcrumb, Section, Panel components render in DOM
+    - CSS font-family applied: body is Nunito, h1 is Archivo Black, code is JetBrains Mono
+    - Color tokens resolved: getComputedStyle(panel) contains panel-1 tonal background
+    - Text baseline size confirmed: 14-15px body
   edge_cases:
-    - unpkg CDN latency or transient failures
+    - CDN unpkg momentarily down
+    - GitHub Pages deployment delay (wait up to 2min)
+    - Browser cache stale (clear before witness)
