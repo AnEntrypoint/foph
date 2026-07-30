@@ -2,7 +2,6 @@ node_modules
 .thoth-test-home
 *.log
 .DS_Store
-.env
 dist
 .cache
 # >>> gm managed (do not edit between markers)
@@ -32,3 +31,4 @@ dist
 .codeinsight
 .gm/rs-learn.db-shm
 .gm/rs-learn.db-wal
+config.bat
