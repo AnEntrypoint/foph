@@ -53,9 +53,12 @@ export default {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title} — Foph</title>
-<link rel="stylesheet" href="https://unpkg.com/anentrypoint-design@latest/dist/247420.css">
+<!-- raw.githack.com, not unpkg: unpkg's npm-package resolution went stale
+     once anentrypoint-design npm publishing stopped. githack fetches
+     straight from the GitHub @main branch with a 60s max-age instead. -->
+<link rel="stylesheet" href="https://raw.githack.com/AnEntrypoint/design/main/dist/247420.css">
 <script type="importmap">
-{ "imports": { "anentrypoint-design": "https://unpkg.com/anentrypoint-design@latest/dist/247420.js" } }
+{ "imports": { "anentrypoint-design": "https://raw.githack.com/AnEntrypoint/design/main/dist/247420.js" } }
 </script>
 <style>
 .page-body h1 { margin-top: 0; }
